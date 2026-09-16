@@ -8,6 +8,8 @@ export async function GET() {
     const token = cookieStore.get('token')?.value;
     console.log("Test from check api : ", token);
 
+
+
     if (!token) {
       return NextResponse.json({ user: null }, { status: 401 });
     }

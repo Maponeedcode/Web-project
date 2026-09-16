@@ -67,6 +67,7 @@ export async function POST(req: Request) {
 
     // 5. Save Cookie to Browser (httpOnly)
     const cookieStore = await cookies();
+
     cookieStore.set('token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
