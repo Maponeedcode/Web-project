@@ -7,10 +7,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { username, fullname, password } = body;
 
-    console.log('--- REGISTER API HIT ---');
-    console.log('Username:', username);
-    console.log('Password received:', password);
-    console.log('Password length:', password ? String(password).length : 0);
 
     if (!username || !fullname || !password) {
       return NextResponse.json(
