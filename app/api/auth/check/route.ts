@@ -5,7 +5,10 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('session_token')?.value;
+    const token = cookieStore.get('token')?.value;
+    console.log("Test from check api : ", token);
+
+
 
     if (!token) {
       return NextResponse.json({ user: null }, { status: 401 });
@@ -15,7 +18,7 @@ export async function GET() {
     const { data: sessionData, error } = await supabaseAdmin
       .from('sessions')
       .select(`
-        session_token,
+        token,
         expires_at,
         users (
           user_id,
@@ -25,12 +28,12 @@ export async function GET() {
           hospital_id
         )
       `)
-      .eq('session_token', token)
+      .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .maybeSingle();
 
     if (error || !sessionData || !sessionData.users) {
-      // หาก Session หมดอายุหรือไม่ถูกต้อง ให้ล้าง Cookie ทิ้ง
+      // if Session expires or incorrect clear Cookie
       cookieStore.delete('session_token');
       return NextResponse.json({ user: null }, { status: 401 });
     }

@@ -5,15 +5,15 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('session_token')?.value;
+    const token = cookieStore.get('token')?.value;
 
     if (token) {
       // delete session from db
-      await supabaseAdmin.from('sessions').delete().eq('session_token', token);
+      await supabaseAdmin.from('sessions').delete().eq('token', token);
     }
 
     // Clear Cookie (Browser side)
-    cookieStore.delete('session_token');
+    cookieStore.delete('token');
 
     return NextResponse.json({ message: 'ออกจากระบบสำเร็จ' });
   } catch (err: any) {
