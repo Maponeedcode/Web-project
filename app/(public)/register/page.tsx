@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     username: '',
     fullname: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -21,9 +22,11 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      // Only number in this feild
+      [name]: name === 'phone' ? value.replace(/[^0-9]/g, '') : value,
     }));
   };
 
@@ -31,17 +34,22 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMessage('');
 
+    // Check phone number length
+    const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+      setErrorMessage('กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (9-10 หลัก)');
+      return;
+    }
+
     // Check password length
     if (formData.password.length < 6) {
       setErrorMessage('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
-      setIsLoading(false);
       return;
     }
 
     // Check password must match
     if (formData.password !== formData.confirmPassword) {
       setErrorMessage('รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบรหัสผ่านอีกครั้ง');
-      setIsLoading(false);
       return;
     }
 
@@ -54,6 +62,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           username: formData.username,
           fullname: formData.fullname,
+          phone: cleanPhone,
           password: formData.password,
         }),
       });
@@ -173,6 +182,30 @@ export default function RegisterPage() {
                 className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] focus:bg-white transition"
               />
             </div>
+          </div>
+
+          {/* Phone Field (เพิ่มใหม่) */}
+          <div>
+            <label htmlFor="phone" className="block text-xs sm:text-sm font-bold text-[#0e3b6c] mb-1.5">
+              เบอร์โทรศัพท์ (Phone Number)
+            </label>
+            <div className="relative flex items-center">
+              <i className="fa-solid fa-phone text-slate-400 absolute left-4 text-sm"></i>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                maxLength={10}
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="เช่น 0812345678"
+                required
+                className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] focus:bg-white transition"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">
+              * ใช้เลข 4 ตัวท้ายเพื่อยืนยันตัวตนเวลารีเซ็ตรหัสผ่าน
+            </p>
           </div>
 
           {/* Password Field */}

@@ -5,18 +5,25 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { username, fullname, password } = body;
+    const { username, fullname, phone, password } = body;
 
-
-    if (!username || !fullname || !password) {
+    if (!username || !fullname || !phone || !password) {
       return NextResponse.json(
         { error: 'กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง' },
         { status: 400 }
       );
     }
 
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+      return NextResponse.json(
+        { error: 'กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (9-10 หลัก)' },
+        { status: 400 }
+      );
+    }
+
     if (password.length < 6) {
-        console.log("Blocked")
+      console.log("Blocked")
       return NextResponse.json(
         { error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' },
         { status: 400 }
@@ -51,10 +58,11 @@ export async function POST(req: Request) {
       .insert({
         user_name: username.trim(),
         full_name: fullname.trim(),
+        phone: cleanPhone,
         password_hash,
         role: 'donor',
       })
-      .select('user_id, user_name, full_name, role')
+      .select('user_id, user_name, full_name, phone, role')
       .single();
 
     if (insertError) {
