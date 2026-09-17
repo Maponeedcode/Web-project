@@ -3,7 +3,7 @@ import HeroSection from '@/components/home/HeroSection';
 import RequestBrowser from '@/components/home/RequestBrowser';
 import HospitalDirectory from '@/components/home/HospitalDirectory';
 import DonorGuide from '@/components/home/DonorGuide';
-import { BloodRequestRow, HospitalRow } from '@/types/database';
+import { BloodRequest, Hospital } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +33,8 @@ async function getLandingData() {
         )
       `)
       .eq('status', 'OPEN')
-      .order('created_at', { ascending: false }),
+      .order('urgency_level', { ascending: true}) // Sort By Urgency level first ( Critical -> H -> N)
+      .order('created_at', { ascending: false }), // Then sort by lastest case
 
     supabase
       .from('hospitals')
@@ -41,9 +42,18 @@ async function getLandingData() {
       .order('name', { ascending: true })
   ]);
 
+  if (requestsRes.error) {
+    console.error('Error fetching blood requests:', requestsRes.error);
+  }
+
+  if (hospitalsRes.error) {
+    console.error('Error fetching hospitals:', hospitalsRes.error);
+  }
+
   return {
-    requests: (requestsRes.data as BloodRequestRow[]) || [],
-    hospitals: (hospitalsRes.data as HospitalRow[]) || []
+    // use (as unknown as BloodRequest[]) to prevent TypeScript from Join many tables
+    requests: ((requestsRes.data as unknown) as BloodRequest[]) || [],
+    hospitals: (hospitalsRes.data as Hospital[]) || []
   };
 }
 

@@ -1,20 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { HospitalRow } from '@/types/database';
+import { Hospital } from '@/types/database';
 
-export default function HospitalDirectory({ hospitals }: { hospitals: HospitalRow[] }) {
+interface HospitalDirectoryProps {
+  hospitals: Hospital[];
+}
+
+const PAGE_SIZE = 4; // We use pagination on this query
+
+export default function HospitalDirectory({ hospitals }: HospitalDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const filtered = hospitals.filter(
-    (h) =>
-      h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      h.province.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filters by province , hospital name
+  const filteredHospitals = hospitals.filter((h) => {
+    const q = searchQuery.toLowerCase().trim();
+    const nameMatch = h.name?.toLowerCase().includes(q) || false;
+    const provinceMatch = h.province?.toLowerCase().includes(q) || false;
+    return nameMatch || provinceMatch;
+  });
+
+  const visibleHospitals = filteredHospitals.slice(0, visibleCount);
 
   return (
     <section id="directory" className="py-12 sm:py-16 bg-slate-100 border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* หัวข้อ */}
         <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
           <span className="text-xs font-extrabold uppercase tracking-wider text-[#65a1f2]">Hospital Directory</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0e3b6c] mt-1 mb-2">
@@ -25,26 +38,31 @@ export default function HospitalDirectory({ hospitals }: { hospitals: HospitalRo
           </p>
         </div>
 
+        {/* ช่องค้นหา */}
         <div className="max-w-xl mx-auto mb-8">
           <div className="relative flex items-center">
             <i className="fa-solid fa-magnifying-glass text-slate-400 absolute left-4 text-sm"></i>
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="พิมพ์ชื่อโรงพยาบาล เช่น จุฬาลงกรณ์, มหาราช, ขอนแก่น..."
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleCount(PAGE_SIZE); // Reset 4 rows when user search
+              }}
+              placeholder="พิมพ์ชื่อโรงพยาบาล เช่น จุฬาลงกรณ์, มหาราช..."
               className="w-full pl-11 pr-4 py-3.5 sm:py-4 bg-white border-2 border-slate-300 rounded-2xl text-sm sm:text-base font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] shadow-sm transition"
             />
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="py-8 text-center bg-white rounded-2xl border border-slate-300">
+        {/* รายการการ์ดโรงพยาบาล */}
+        {visibleHospitals.length === 0 ? (
+          <div className="col-span-full py-8 text-center bg-white rounded-2xl border border-slate-300">
             <p className="text-sm font-semibold text-slate-500">ไม่พบโรงพยาบาลที่ค้นหา</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {filtered.map((h) => (
+            {visibleHospitals.map((h) => (
               <article
                 key={h.hospital_id}
                 className="bg-white rounded-2xl p-5 sm:p-6 border-2 border-slate-200 shadow-sm hover:border-[#65a1f2] transition flex flex-col justify-between"
@@ -61,22 +79,40 @@ export default function HospitalDirectory({ hospitals }: { hospitals: HospitalRo
                     <span>{h.address}</span>
                   </p>
                 </div>
+
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-100 text-xs">
                   <span className="text-slate-500 flex items-center gap-1.5">
-                    <i className="fa-solid fa-user-doctor text-slate-400 text-xs"></i>{' '}
-                    {h.contact_person || 'เจ้าหน้าที่คลังเลือด'}
+                    <i className="fa-regular fa-user text-slate-400 text-xs"></i>
+                    <span>{h.contact_person || 'ฝ่ายธนาคารเลือด'}</span>
                   </span>
-                  <a
-                    href={`tel:${h.contact_phone.replace(/[^0-9]/g, '')}`}
-                    className="font-bold text-[#dc2626] hover:underline flex items-center gap-1"
-                  >
-                    <i className="fa-solid fa-phone text-xs"></i> {h.contact_phone}
-                  </a>
+                  {h.contact_phone && (
+                    <a
+                      href={`tel:${h.contact_phone.replace(/[^0-9]/g, '')}`}
+                      className="font-bold text-[#dc2626] hover:underline flex items-center gap-1"
+                    >
+                      <i className="fa-solid fa-phone text-xs"></i>
+                      <span>{h.contact_phone}</span>
+                    </a>
+                  )}
                 </div>
               </article>
             ))}
           </div>
         )}
+
+        {/* ปุ่มโหลดเพิ่มเติม */}
+        {visibleHospitals.length < filteredHospitals.length && (
+          <div className="mt-10 text-center">
+            <button
+              onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+              className="px-8 py-3.5 bg-white hover:bg-slate-50 text-[#0e3b6c] hover:border-[#65a1f2] border-2 border-slate-300 font-bold text-sm rounded-2xl shadow-sm transition inline-flex items-center gap-2"
+            >
+              <span>โหลดเพิ่มเติม</span>
+              <i className="fa-solid fa-chevron-down text-xs text-[#65a1f2]"></i>
+            </button>
+          </div>
+        )}
+
       </div>
     </section>
   );

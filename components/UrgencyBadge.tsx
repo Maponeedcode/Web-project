@@ -1,5 +1,5 @@
 interface UrgencyBadgeProps {
-  urgency: 'CRITICAL' | 'URGENT' | 'NORMAL' | string;
+  urgency: 'CRITICAL' | 'HIGH' | 'NORMAL' | string;
   className?: string;
 }
 
@@ -7,32 +7,33 @@ export default function UrgencyBadge({ urgency, className = '' }: UrgencyBadgePr
   const getBadgeStyle = () => {
     switch (urgency?.toUpperCase()) {
       case 'CRITICAL':
-        return 'bg-red-600 text-white animate-pulse';
-      case 'URGENT':
-        return 'bg-amber-500 text-white';
+        return 'bg-red-100 text-[#dc2626] border-red-300';
+      case 'HIGH':
+        return 'bg-amber-100 text-amber-800 border-amber-300';
       case 'NORMAL':
       default:
-        return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+        return 'bg-slate-200 text-slate-700 border-slate-300';
     }
   };
 
-  const getLabel = () => {
+  const getDotColor = () => {
     switch (urgency?.toUpperCase()) {
       case 'CRITICAL':
-        return 'ด่วนวิกฤต';
-      case 'URGENT':
-        return 'ด่วน';
+        return 'bg-[#dc2626]';
+      case 'HIGH':
+        return 'bg-amber-600';
       case 'NORMAL':
       default:
-        return 'ปกติ';
+        return 'bg-slate-500';
     }
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${getBadgeStyle()} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border ${getBadgeStyle()} ${className}`}
     >
-      {getLabel()}
+      <span className={`size-2 rounded-full ${getDotColor()}`}></span>
+      {urgency?.toUpperCase()}
     </span>
   );
 }

@@ -5,10 +5,12 @@ interface BloodBadgeProps {
 
 export default function BloodBadge({ bloodType, className = '' }: BloodBadgeProps) {
   return (
-    <span
-      className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 ${className}`}
+    <div
+      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#0e3b6c] text-white flex items-center justify-center shrink-0 shadow-md ${className}`}
     >
-      {bloodType}
-    </span>
+      <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">
+        {bloodType}
+      </span>
+    </div>
   );
 }
