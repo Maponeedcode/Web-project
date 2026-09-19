@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import {
-  faChartPie,
   faClockRotateLeft,
   faBell,
   faRightFromBracket,
@@ -19,7 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 interface MenuItem {
   label: string;
   href: string;
-  icon: typeof faChartPie;
+  icon: typeof faHouse;
 }
 
 const menuItems: MenuItem[] = [
@@ -120,6 +119,7 @@ export default function DonorSidebar({
           border-r
           border-slate-200
           bg-white
+          font-noto-sans-thai
           shadow-xl
           transition-transform
           duration-300
@@ -153,6 +153,7 @@ export default function DonorSidebar({
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3"
           >
+            {/* Logo Image */}
             <div
               className="
                 flex
@@ -170,9 +171,15 @@ export default function DonorSidebar({
               />
             </div>
 
+            {/* Logo Text */}
             <div>
-              <h1 className="text-base font-bold text-[#0e3b6c]">
-                BloodConnect
+              <h1 className="text-base font-bold">
+                <span className="text-[#0e3b6c]">
+                  Blood
+                </span>
+                <span className="text-[#ed1b32]">
+                  Connect
+                </span>
               </h1>
 
               <p className="text-[6px] font-medium tracking-[0.4px] text-[#65a1f2]">
@@ -211,6 +218,7 @@ export default function DonorSidebar({
         {/* MENU */}
         {/* ================================================= */}
         <nav className="flex-1 px-3 py-5">
+          {/* Menu Title */}
           <p
             className="
               mb-3
@@ -225,6 +233,7 @@ export default function DonorSidebar({
             Menu
           </p>
 
+          {/* Menu Items */}
           <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive =
@@ -255,6 +264,7 @@ export default function DonorSidebar({
                     }
                   `}
                 >
+                  {/* Icon */}
                   <FontAwesomeIcon
                     icon={item.icon}
                     className={`
@@ -268,6 +278,7 @@ export default function DonorSidebar({
                     `}
                   />
 
+                  {/* Label */}
                   <span>{item.label}</span>
 
                   {/* Notification Indicator */}
@@ -316,7 +327,9 @@ export default function DonorSidebar({
             </div>
           </div>
 
-          {/* Logout */}
+          {/* ================================================= */}
+          {/* LOGOUT */}
+          {/* ================================================= */}
           {onLogout && (
             <button
               type="button"
