@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import {
   faClockRotateLeft,
   faBell,
   faRightFromBracket,
-  faBars,
   faXmark,
   faHouse,
 } from "@fortawesome/free-solid-svg-icons";
@@ -40,78 +39,42 @@ const menuItems: MenuItem[] = [
 ];
 
 interface DonorSidebarProps {
-  userName?: string;
-  bloodGroup?: string;
-  onLogout?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function DonorSidebar({
-  userName = "Donor",
-  bloodGroup = "O+",
-  onLogout,
+export default function DonorSideBar({
+  isOpen,
+  onClose,
 }: DonorSidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* ================================================= */}
-      {/* MOBILE HAMBURGER */}
-      {/* ================================================= */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        aria-label="Open sidebar"
-        className="
-          fixed
-          left-3
-          top-3
-          z-[60]
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-          rounded-xl
-          text-slate-600
-          transition
-          hover:bg-slate-100
-          md:hidden
-        "
-      >
-        <FontAwesomeIcon
-          icon={faBars}
-          className="h-5 w-5"
-        />
-      </button>
-
-      {/* ================================================= */}
-      {/* MOBILE OVERLAY */}
-      {/* ================================================= */}
+      {/* Mobile overlay */}
       {isOpen && (
         <button
           type="button"
           aria-label="Close sidebar"
-          onClick={() => setIsOpen(false)}
+          onClick={onClose}
           className="
             fixed
             inset-0
-            z-[70]
-            bg-black/30
+            z-[55]
+            bg-slate-900/30
+            backdrop-blur-[1px]
             md:hidden
           "
         />
       )}
 
-      {/* ================================================= */}
-      {/* SIDEBAR */}
-      {/* ================================================= */}
+      {/* Sidebar */}
       <aside
         className={`
           fixed
           left-0
           top-0
-          z-[80]
+          z-[60]
           flex
           h-screen
           w-64
@@ -119,156 +82,199 @@ export default function DonorSidebar({
           border-r
           border-slate-200
           bg-white
-          font-noto-sans-thai
-          shadow-xl
           transition-transform
           duration-300
-          ease-in-out
+          ease-out
 
           ${
             isOpen
               ? "translate-x-0"
-              : "-translate-x-full md:translate-x-0"
+              : "-translate-x-full"
           }
+
+          md:translate-x-0
         `}
       >
-        {/* ================================================= */}
-        {/* SIDEBAR HEADER */}
-        {/* ================================================= */}
+        {/* =========================
+            Logo
+        ========================= */}
         <div
           className="
             flex
-            h-16
+            h-20
             shrink-0
             items-center
-            justify-between
             border-b
             border-slate-100
-            px-5
+            px-6
           "
         >
-          {/* Logo */}
           <Link
             href="/dashboard"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3"
+            onClick={onClose}
+            className="
+              flex
+              items-center
+              gap-3
+            "
           >
-            {/* Logo Image */}
-            <div
+            {/* Your Logo */}
+            <Image
+              src="/logo_bloodConnect.svg"
+              alt="BloodConnect Logo"
+              width={42}
+              height={42}
+              priority
               className="
-                flex
                 h-10
                 w-10
                 shrink-0
-                items-center
-                justify-center
+                object-contain
               "
-            >
-              <img
-                src="/logo_bloodConnect.svg"
-                alt="BloodConnect"
-                className="h-full w-full object-contain"
-              />
-            </div>
+            />
 
-            {/* Logo Text */}
+            {/* Brand */}
             <div>
-              <h1 className="text-base font-bold">
-                <span className="text-[#0e3b6c]">
+              <div
+                className="
+                  text-[18px]
+                  font-bold
+                  leading-tight
+                  tracking-tight
+                "
+              >
+                <span className="text-[#0E3B6C]">
                   Blood
                 </span>
-                <span className="text-[#ed1b32]">
+
+                <span className="text-[#DC2626]">
                   Connect
                 </span>
-              </h1>
+              </div>
 
-              <p className="text-[6px] font-medium tracking-[0.4px] text-[#65a1f2]">
+              <div
+                className="
+                  mt-0.5
+                  text-[8px]
+                  font-semibold
+                  tracking-[0.13em]
+                  text-[#65a1f2]
+                "
+              >
                 CONNECT LIVES SAVE LIVES
-              </p>
+              </div>
             </div>
           </Link>
 
-          {/* Close Button */}
+          {/* Mobile close button */}
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close sidebar"
+            onClick={onClose}
+            aria-label="Close menu"
             className="
+              ml-auto
               flex
-              h-9
-              w-9
-              shrink-0
+              h-8
+              w-8
               items-center
               justify-center
               rounded-lg
-              text-slate-500
+              text-slate-400
               transition
               hover:bg-slate-100
+              hover:text-slate-700
               md:hidden
             "
           >
             <FontAwesomeIcon
               icon={faXmark}
-              className="h-5 w-5"
+              className="h-4 w-4"
             />
           </button>
         </div>
 
-        {/* ================================================= */}
-        {/* MENU */}
-        {/* ================================================= */}
-        <nav className="flex-1 px-3 py-5">
-          {/* Menu Title */}
+        {/* =========================
+            Navigation
+        ========================= */}
+        <nav className="flex-1 px-4 py-7">
           <p
             className="
               mb-3
-              px-4
-              text-[11px]
-              font-semibold
+              px-3
+              text-[10px]
+              font-bold
               uppercase
-              tracking-wider
+              tracking-[0.14em]
               text-slate-400
             "
           >
-            Menu
+            MENU
           </p>
 
-          {/* Menu Items */}
           <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive =
                 pathname === item.href ||
-                pathname.startsWith(`${item.href}/`);
+                pathname.startsWith(
+                  `${item.href}/`
+                );
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={onClose}
                   className={`
                     group
+                    relative
                     flex
                     items-center
                     gap-3
                     rounded-xl
-                    px-4
+                    px-3
                     py-3
-                    text-sm
+                    text-[14px]
                     font-medium
                     transition-all
+                    duration-200
 
                     ${
                       isActive
-                        ? "bg-[#eaf3ff] text-[#126fd1]"
-                        : "text-slate-500 hover:bg-[#f5f9ff] hover:text-[#126fd1]"
+                        ? `
+                          bg-[#126fd1]/10
+                          text-[#126fd1]
+                        `
+                        : `
+                          text-slate-500
+                          hover:bg-slate-50
+                          hover:text-[#126fd1]
+                        `
                     }
                   `}
                 >
+                  {/* Active indicator */}
+                  {isActive && (
+                    <span
+                      className="
+                        absolute
+                        left-0
+                        top-1/2
+                        h-6
+                        w-1
+                        -translate-y-1/2
+                        rounded-r-full
+                        bg-[#126fd1]
+                      "
+                    />
+                  )}
+
                   {/* Icon */}
                   <FontAwesomeIcon
                     icon={item.icon}
                     className={`
-                      h-4 w-4
+                      h-[17px]
+                      w-[17px]
+                      transition
 
                       ${
                         isActive
@@ -281,9 +287,17 @@ export default function DonorSidebar({
                   {/* Label */}
                   <span>{item.label}</span>
 
-                  {/* Notification Indicator */}
+                  {/* Notification dot */}
                   {item.href === "/requests" && (
-                    <span className="ml-auto h-2 w-2 rounded-full bg-[#ed1b32]" />
+                    <span
+                      className="
+                        ml-auto
+                        h-2
+                        w-2
+                        rounded-full
+                        bg-[#ed1b32]
+                      "
+                    />
                   )}
                 </Link>
               );
@@ -291,75 +305,42 @@ export default function DonorSidebar({
           </div>
         </nav>
 
-        {/* ================================================= */}
-        {/* DONOR INFO */}
-        {/* ================================================= */}
-        <div className="border-t border-slate-100 p-4">
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                shrink-0
-                items-center
-                justify-center
-                rounded-full
-                bg-[#126fd1]
-                text-sm
-                font-semibold
-                text-white
-              "
-            >
-              {userName.charAt(0).toUpperCase()}
-            </div>
+        {/* =========================
+            Logout
+        ========================= */}
+        <div
+          className="
+            border-t
+            border-slate-100
+            px-4
+            py-4
+          "
+        >
+          <button
+            type="button"
+            className="
+              flex
+              w-full
+              items-center
+              gap-3
+              rounded-xl
+              px-3
+              py-3
+              text-[14px]
+              font-medium
+              text-slate-500
+              transition
+              hover:bg-red-50
+              hover:text-[#ed1b32]
+            "
+          >
+            <FontAwesomeIcon
+              icon={faRightFromBracket}
+              className="h-[17px] w-[17px]"
+            />
 
-            {/* User Info */}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-800">
-                {userName}
-              </p>
-
-              <p className="text-xs text-slate-400">
-                Donor • {bloodGroup}
-              </p>
-            </div>
-          </div>
-
-          {/* ================================================= */}
-          {/* LOGOUT */}
-          {/* ================================================= */}
-          {onLogout && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="
-                mt-3
-                flex
-                w-full
-                items-center
-                justify-center
-                gap-2
-                rounded-lg
-                border
-                border-slate-200
-                px-3
-                py-2.5
-                text-sm
-                text-slate-500
-                transition
-                hover:bg-slate-50
-              "
-            >
-              <FontAwesomeIcon
-                icon={faRightFromBracket}
-                className="h-4 w-4"
-              />
-
-              Logout
-            </button>
-          )}
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
     </>
