@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import {
   faClockRotateLeft,
   faBell,
-  faRightFromBracket,
   faXmark,
   faHouse,
 } from "@fortawesome/free-solid-svg-icons";
@@ -305,43 +304,6 @@ export default function DonorSideBar({
           </div>
         </nav>
 
-        {/* =========================
-            Logout
-        ========================= */}
-        <div
-          className="
-            border-t
-            border-slate-100
-            px-4
-            py-4
-          "
-        >
-          <button
-            type="button"
-            className="
-              flex
-              w-full
-              items-center
-              gap-3
-              rounded-xl
-              px-3
-              py-3
-              text-[14px]
-              font-medium
-              text-slate-500
-              transition
-              hover:bg-red-50
-              hover:text-[#ed1b32]
-            "
-          >
-            <FontAwesomeIcon
-              icon={faRightFromBracket}
-              className="h-[17px] w-[17px]"
-            />
-
-            <span>Logout</span>
-          </button>
-        </div>
       </aside>
     </>
   );
