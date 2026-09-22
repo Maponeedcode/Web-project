@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
@@ -8,7 +9,7 @@ import RequestFeed from "@/components/donor/Notifications/RequestFeed";
 import Footer from "@/components/layout/Footer";
 
 import { supabase } from "@/lib/supabase";
-import type { BloodRequest, Hospital } from "@/types/database";
+import type { BloodRequest } from "@/types/database";
 
 interface DonorProfile {
   donor_id: string;
@@ -19,98 +20,78 @@ interface DonorProfile {
 }
 
 export default function RequestsPage() {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [requests, setRequests] = useState<BloodRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ฟังก์ชันแปลง Rh Factor ให้เป็นรูปแบบสากล (+ หรือ -) เพื่อนำมา match กันได้อย่างแม่นยำ
+  const normalizeRh = (rh?: string | null) => {
+    if (!rh) return null;
+    const clean = rh.trim().toUpperCase();
+    if (clean === "+" || clean.startsWith("POS")) return "+";
+    if (clean === "-" || clean.startsWith("NEG")) return "-";
+    return null;
+  };
 
   useEffect(() => {
     const fetchRequests = async () => {
-      // ==========================================
-      // 1. ตรวจสอบ User ที่ Login อยู่
-      // ==========================================
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      try {
+        setLoading(true);
 
-      if (userError || !user) {
-        console.error("User error:", userError);
-        return;
-      }
+        // ==========================================
+        // 1. ดึงข้อมูล User จาก /api/auth/check
+        // ==========================================
+        const authRes = await fetch("/api/auth/check", {
+          method: "GET",
+          credentials: "include", // ส่ง Cookie token แนบไปด้วย
+        });
 
-      console.log("Logged in user:", user.id);
+        if (!authRes.ok) {
+          console.warn("Unauthorized or session expired, redirecting to login...");
+          router.push("/login");
+          return;
+        }
 
-      // ==========================================
-      // 2. ดึง Donor Profile ของ User คนนี้
-      // ==========================================
-      const { data: donorProfile, error: profileError } =
-        await supabase
+        const authData = await authRes.json();
+        // ดึง user_id ตามโครงสร้าง response: { user: { user_id, ... } }
+        const userId = authData?.user?.user_id;
+
+        if (!userId) {
+          console.warn("User ID not found in session, redirecting to login...");
+          router.push("/login");
+          return;
+        }
+
+        console.log("Logged in user ID:", userId);
+
+        // ==========================================
+        // 2. ดึง Donor Profile จาก Supabase
+        // ==========================================
+        const { data: donorProfile, error: profileError } = await supabase
           .from("donor_profiles")
-          .select(`
-            donor_id,
-            blood_type,
-            rh_factor,
-            province,
-            is_ready
-          `)
-          .eq("donor_id", user.id)
-          .single();
+          .select("donor_id, blood_type, rh_factor, province, is_ready")
+          .eq("donor_id", userId)
+          .single<DonorProfile>();
 
-      if (profileError) {
-        console.error(
-          "Donor profile error:",
-          profileError
-        );
-        return;
-      }
+        if (profileError || !donorProfile) {
+          console.error("Donor profile error:", profileError);
+          return;
+        }
 
-      if (!donorProfile) {
-        console.error("Donor profile not found");
-        return;
-      }
+        // ==========================================
+        // 3. ตรวจสอบสถานะความพร้อมบริจาค
+        // ==========================================
+        if (!donorProfile.is_ready) {
+          console.log("Donor is currently not ready to donate.");
+          setRequests([]);
+          return;
+        }
 
-      console.log("Donor Profile:", donorProfile);
-
-      // ==========================================
-      // 3. ถ้า Donor ไม่พร้อมบริจาค
-      // ==========================================
-      if (!donorProfile.is_ready) {
-        console.log(
-          "Donor is currently not ready to donate."
-        );
-
-        setRequests([]);
-        return;
-      }
-
-      // ==========================================
-      // 4. ดึง Hospital ทั้งหมด
-      // ==========================================
-      const { data: hospitalData, error: hospitalError } =
-        await supabase
-          .from("hospitals")
-          .select(`
-            hospital_id,
-            name,
-            address,
-            province,
-            contact_phone,
-            contact_person,
-            created_at
-          `);
-
-      if (hospitalError) {
-        console.error(
-          "Hospital error:",
-          hospitalError
-        );
-        return;
-      }
-
-      // ==========================================
-      // 5. ดึง Blood Request ทั้งหมด
-      // ==========================================
-      const { data: requestData, error: requestError } =
-        await supabase
+        // ==========================================
+        // 4. ดึง Blood Requests พร้อม Join ข้อมูล Hospitals
+        // ==========================================
+        const { data: requestData, error: requestError } = await supabase
           .from("blood_requests")
           .select(`
             request_id,
@@ -123,6 +104,11 @@ export default function RequestsPage() {
             target_date,
             status,
             created_at,
+            hospitals!inner (
+              hospital_id,
+              name,
+              province
+            ),
             donation_records (
               record_id,
               volume_ml,
@@ -130,158 +116,40 @@ export default function RequestsPage() {
             )
           `)
           .eq("status", "OPEN")
-          .order("created_at", {
-            ascending: false,
-          });
+          .eq("blood_type", donorProfile.blood_type)
+          .eq("hospitals.province", donorProfile.province)
+          .order("created_at", { ascending: false });
 
-      if (requestError) {
-        console.error(
-          "Blood request error:",
-          requestError
-        );
-        return;
+        if (requestError) {
+          console.error("Blood request error:", requestError);
+          return;
+        }
+
+        // ==========================================
+        // 5. Match Rh Factor ระหว่าง Donor กับ Request
+        // ==========================================
+        const donorRh = normalizeRh(donorProfile.rh_factor);
+
+        const matchedRequests = (requestData ?? []).filter((request: any) => {
+          const requestRh = normalizeRh(request.rh_factor);
+          return donorRh !== null && donorRh === requestRh;
+        });
+
+        setRequests(matchedRequests as unknown as BloodRequest[]);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
       }
-
-      // ==========================================
-      // 6. Match Request กับ Donor Profile
-      // ==========================================
-      const matchedRequests: BloodRequest[] =
-        (requestData ?? [])
-          .filter((request) => {
-            // ------------------------------
-            // Match Blood Type
-            // ------------------------------
-            const bloodTypeMatch =
-              request.blood_type ===
-              donorProfile.blood_type;
-
-            // ------------------------------
-            // Match Rh Factor
-            // รองรับทั้ง Positive / Negative
-            // และ + / -
-            // ------------------------------
-            const donorRh =
-              donorProfile.rh_factor === "Positive" ||
-              donorProfile.rh_factor === "+"
-                ? "+"
-                : "-";
-
-            const requestRh =
-              request.rh_factor === "Positive" ||
-              request.rh_factor === "+"
-                ? "+"
-                : "-";
-
-            const rhMatch =
-              donorRh === requestRh;
-
-            // ------------------------------
-            // หา Hospital ของ Request
-            // ------------------------------
-            const hospital = (
-              hospitalData ?? []
-            ).find(
-              (h: Hospital) =>
-                h.hospital_id === request.hospital_id
-            );
-
-            // ------------------------------
-            // Match Province
-            // ------------------------------
-            const provinceMatch =
-              hospital?.province ===
-              donorProfile.province;
-
-            return (
-              bloodTypeMatch &&
-              rhMatch &&
-              provinceMatch
-            );
-          })
-          .map((request) => {
-            // ==================================
-            // 7. จับคู่ Hospital กับ Request
-            // ==================================
-            const hospital = (
-              hospitalData ?? []
-            ).find(
-              (h: Hospital) =>
-                h.hospital_id === request.hospital_id
-            );
-
-            return {
-              ...request,
-              hospitals: hospital
-                ? {
-                    name: hospital.name,
-                    province: hospital.province,
-                  }
-                : undefined,
-            };
-          });
-
-      // ==========================================
-      // 8. Debug
-      // ==========================================
-      console.log(
-        "================================"
-      );
-
-      console.log(
-        "Donor Blood Type:",
-        donorProfile.blood_type
-      );
-
-      console.log(
-        "Donor Rh:",
-        donorProfile.rh_factor
-      );
-
-      console.log(
-        "Donor Province:",
-        donorProfile.province
-      );
-
-      console.log(
-        "All Hospitals:",
-        hospitalData
-      );
-
-      console.log(
-        "All Blood Requests:",
-        requestData
-      );
-
-      console.log(
-        "Matched Requests:",
-        matchedRequests
-      );
-
-      console.log(
-        "Matched Request Count:",
-        matchedRequests.length
-      );
-
-      console.log(
-        "================================"
-      );
-
-      // ==========================================
-      // 9. ส่งเฉพาะ Request ที่ Match
-      // ==========================================
-      setRequests(matchedRequests);
     };
 
     fetchRequests();
-  }, []);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-slate-50">
-
       {/* Navbar */}
-      <DonorNavbar
-        onMenuClick={() => setIsSidebarOpen(true)}
-      />
+      <DonorNavbar onMenuClick={() => setIsSidebarOpen(true)} />
 
       {/* Sidebar */}
       <DonorSideBar
@@ -290,61 +158,30 @@ export default function RequestsPage() {
       />
 
       {/* Main */}
-      <main
-        className="
-          min-h-screen
-          pt-[116px]
-          md:ml-64
-          md:pt-16
-        "
-      >
-        <div
-          className="
-            w-full
-            px-4
-            py-5
-            sm:px-6
-            md:px-8
-            lg:px-10
-          "
-        >
+      <main className="min-h-screen pt-[116px] md:ml-64 md:pt-16">
+        <div className="w-full px-4 py-5 sm:px-6 md:px-8 lg:px-10">
           <div className="mx-auto w-full max-w-5xl">
-
             {/* Header */}
             <div className="mb-5 sm:mb-6">
-
-              <h1
-                className="
-                  text-xl
-                  font-bold
-                  text-slate-800
-                  sm:text-2xl
-                "
-              >
+              <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
                 Notifications
               </h1>
-
-              <p
-                className="
-                  mt-1
-                  text-xs
-                  text-slate-500
-                  sm:text-sm
-                "
-              >
+              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
                 Blood requests that match your donor profile
               </p>
-
             </div>
 
             {/* Request Feed */}
-            <RequestFeed
-              requests={requests}
-            />
+            {loading ? (
+              <div className="py-12 text-center text-sm text-slate-500">
+                กำลังโหลดรายการคำขอรับบริจาคโลหิต...
+              </div>
+            ) : (
+              <RequestFeed requests={requests} />
+            )}
 
             {/* Footer */}
             <Footer />
-
           </div>
         </div>
       </main>
