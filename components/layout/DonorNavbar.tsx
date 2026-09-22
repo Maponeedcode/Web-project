@@ -39,7 +39,7 @@ export default function DonorNavbar({
     async function fetchUser() {
       try {
         const response = await fetch(
-          "/api/auth/me",
+          "/api/auth/check",
           {
             credentials: "include",
           }
