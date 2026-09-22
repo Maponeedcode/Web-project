@@ -21,12 +21,24 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Manage Phone format (-)
+  const formatPhoneNumber = (value: string) => {
+    const clean = value.replace(/\D/g, '');
+    if (clean.length <= 3) {
+      return clean;
+    }
+    if (clean.length <= 6) {
+      return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+    }
+    return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6, 10)}`;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      // Only number in this feild
-      [name]: name === 'phone' ? value.replace(/[^0-9]/g, '') : value,
+      // Only number in this field
+      [name]: name === 'phone' ? formatPhoneNumber(value) : value,
     }));
   };
 
@@ -195,10 +207,10 @@ export default function RegisterPage() {
                 type="tel"
                 id="phone"
                 name="phone"
-                maxLength={10}
+                maxLength={12}
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="เช่น 0812345678"
+                placeholder="เช่น 081-234-5678"
                 required
                 className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] focus:bg-white transition"
               />
