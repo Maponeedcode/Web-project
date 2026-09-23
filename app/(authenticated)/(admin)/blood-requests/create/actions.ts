@@ -33,6 +33,6 @@ export async function createBloodRequest(
     return { error: 'สร้างคำร้องไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง' };
   }
 
-  revalidatePath('/admin/blood-requests');
-  redirect(`/admin/blood-requests/${requestId}`);
+  revalidatePath('/blood-requests');
+  redirect(`/blood-requests/${requestId}`);
 }

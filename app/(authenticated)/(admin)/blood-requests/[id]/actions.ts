@@ -48,9 +48,9 @@ export async function updateBloodRequest(
   }
   if (!data) return { error: 'คำร้องถูกเปลี่ยนสถานะแล้ว กรุณากลับไปตรวจสอบอีกครั้ง' };
 
-  revalidatePath('/admin/blood-requests');
-  revalidatePath(`/admin/blood-requests/${id}`);
-  redirect(`/admin/blood-requests/${id}`);
+  revalidatePath('/blood-requests');
+  revalidatePath(`/blood-requests/${id}`);
+  redirect(`/blood-requests/${id}`);
 }
 
 export async function closeBloodRequest(
@@ -75,7 +75,7 @@ export async function closeBloodRequest(
   }
   if (!data) return { error: 'คำร้องถูกเปลี่ยนสถานะแล้ว กรุณากลับไปตรวจสอบอีกครั้ง' };
 
-  revalidatePath('/admin/blood-requests');
-  revalidatePath(`/admin/blood-requests/${id}`);
-  redirect(`/admin/blood-requests/${id}`);
+  revalidatePath('/blood-requests');
+  revalidatePath(`/blood-requests/${id}`);
+  redirect(`/blood-requests/${id}`);
 }
