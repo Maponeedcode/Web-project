@@ -29,3 +29,15 @@ export interface BloodRequest {
     status: string;
   }[];
 }
+
+export interface DonationRecord {
+  record_id: string;
+  donor_id: string;
+  request_id: string | null;
+  donation_date: string;
+  volume_ml: number | null;
+  blood_test_result: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
