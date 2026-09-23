@@ -9,7 +9,7 @@ import {
 } from './blood-request';
 
 export default function RequestDetail({ request }: { request: RequestView }) {
-  const editable = request.status === 'OPEN' || request.status === 'IN_PROGRESS';
+  const editable = request.status === 'OPEN' || request.status === 'IN_PROGRESS' || request.status === 'EXPIRED';
   return <>
     <Heading title="รายละเอียดคำร้องขอเลือด" subtitle="ตรวจสอบข้อมูล ติดตามสถานะ และการตอบรับ">
       <div className="flex flex-wrap gap-2">

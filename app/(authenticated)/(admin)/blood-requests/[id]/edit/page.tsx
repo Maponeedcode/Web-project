@@ -11,6 +11,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     getHospitalForUser(user),
   ]);
   if (!request) notFound();
-  if (request.status !== 'OPEN' && request.status !== 'IN_PROGRESS') redirect(`/blood-requests/${id}`);
+  if (request.status !== 'OPEN' && request.status !== 'IN_PROGRESS' && request.status !== 'EXPIRED') redirect(`/blood-requests/${id}`);
   return <EditRequest request={request} hospital={hospital} />;
 }

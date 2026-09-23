@@ -8,7 +8,7 @@ import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export type RequestActionState = { error: string | null };
-const editableStatuses = new Set(['OPEN', 'IN_PROGRESS']);
+const editableStatuses = new Set(['OPEN', 'IN_PROGRESS', 'EXPIRED']);
 
 function requestId(formData: FormData) {
   return String(formData.get('request_id') ?? '').trim();
