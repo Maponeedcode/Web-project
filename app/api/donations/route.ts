@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSessionToken } from "@/lib/session";
+import { effectiveBloodRequestStatus } from "@/types/database";
 
 // =========================================
 // POST /api/donations
@@ -138,13 +139,14 @@ export async function POST(request: Request) {
     // =========================================
     // 5. ตรวจสอบ Status
     // =========================================
-    if (bloodRequest.status !== "OPEN") {
+    const currentStatus = effectiveBloodRequestStatus(bloodRequest.status, bloodRequest.target_date);
+    if (currentStatus !== "OPEN") {
       return NextResponse.json(
         {
           error:
             "This blood request is no longer available.",
           current_status:
-            bloodRequest.status,
+            currentStatus,
         },
         { status: 409 }
       );

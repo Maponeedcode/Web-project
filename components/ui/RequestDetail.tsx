@@ -1,15 +1,15 @@
 import Link from 'next/link';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import CloseRequestButton from './CloseRequestButton';
-import RequestStatusStepper from './RequestStatusStepper';
 import {
   type RequestView, Badge, Heading, Icon, InfoTable, SectionTitle, basePath, buttonClass,
   cardClass, formatDate, formatDateTime, primaryButtonClass, shortRequestId,
-  statusColor, statusLabels,
+  displayedRequestStatus, statusColor, statusLabels, StatusTimeline,
 } from './blood-request';
 
 export default function RequestDetail({ request }: { request: RequestView }) {
   const editable = request.status === 'OPEN' || request.status === 'IN_PROGRESS';
+  const displayStatus = displayedRequestStatus(request);
   return <>
     <Heading title="รายละเอียดคำร้องขอเลือด" subtitle="ตรวจสอบข้อมูล ติดตามสถานะ และการตอบรับ">
       <div className="flex flex-wrap gap-2">
@@ -25,7 +25,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
         <div><h2 className="mb-2 text-base font-semibold sm:text-xl" title={request.id}>คำร้องขอเลือด #{shortRequestId(request.id)}</h2><h3 className="flex items-center gap-2 text-sm sm:text-base"><Icon name="hospital" />{request.hospital}</h3><p className="mb-2 text-sm text-[#6480a1]">จ.{request.province}</p><small className="text-xs text-[#6480a1]">สร้างเมื่อ {formatDateTime(request.createdAt)}</small></div>
       </div>
       <div className="min-w-0 xl:w-1/2">
-        <div className="mb-3 flex flex-wrap gap-2"><UrgencyBadge urgency={request.urgency} /><Badge color={statusColor(request.status)}>{statusLabels[request.status]}</Badge></div>
+        <div className="mb-3 flex flex-wrap gap-2"><UrgencyBadge urgency={request.urgency} /><Badge color={statusColor(displayStatus)}>{statusLabels[displayStatus]}</Badge></div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="flex items-center gap-2 rounded-lg border border-[#eef4f9] bg-[#f5f9fd] p-3"><Icon name="clock" /><span><small className="block text-xs text-[#6480a1]">วันที่ต้องการเลือด</small><b className="text-xs">{formatDate(request.date)}</b></span></div>
           <div className="flex items-center gap-2 rounded-lg border border-[#eef4f9] bg-[#f5f9fd] p-3"><Icon name="drop" className="size-5 shrink-0" /><span><small className="block text-xs text-[#6480a1]">จำนวนที่ต้องการ</small><b className="text-xs">{request.units} ยูนิต</b></span></div>
@@ -55,9 +55,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
         <section className={cardClass}><SectionTitle icon="hospital">สถานที่และข้อมูลติดต่อ</SectionTitle><InfoTable rows={[
           ['ที่อยู่', request.address], ['ชื่อผู้ติดต่อ', request.contact], ['เบอร์ติดต่อ', request.phone],
         ]} /></section>
-        <section className={`${cardClass} scroll-mt-20`} id="timeline"><SectionTitle icon="clock">ขั้นตอนคำร้อง</SectionTitle>
-          <RequestStatusStepper status={request.status} createdAt={request.createdAt} />
-        </section>
+        <div className="scroll-mt-20" id="timeline"><StatusTimeline request={request} /></div>
         <section className={`${cardClass} scroll-mt-20`} id="donors"><SectionTitle icon="users">รายการบริจาคที่เกี่ยวข้อง</SectionTitle><strong className="ml-8 text-xl">{request.responseCount} รายการ</strong><p className="ml-8 mt-1 text-xs text-[#6480a1]">{request.responseCount ? 'พบรายการบริจาคที่เชื่อมกับคำร้องนี้' : 'ยังไม่มีรายการบริจาคที่เชื่อมกับคำร้องนี้'}</p></section>
       </div>
     </div>

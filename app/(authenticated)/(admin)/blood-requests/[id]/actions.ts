@@ -6,6 +6,7 @@ import { getBloodRequestForUser } from '../data';
 import { parseBloodRequestForm } from '../form';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { effectiveBloodRequestStatus } from '@/types/database';
 
 export type RequestActionState = { error: string | null };
 const editableStatuses = new Set(['OPEN', 'IN_PROGRESS']);
@@ -34,9 +35,13 @@ export async function updateBloodRequest(
   const parsed = parseBloodRequestForm(formData);
   if (!parsed.success) return { error: parsed.error };
 
+  // An overdue OPEN request may only have its target date extended.
+  const isExpired = effectiveBloodRequestStatus(access.request!.status, access.request!.date) === 'EXPIRED';
+  const updateData = isExpired ? { target_date: parsed.value.target_date } : parsed.value;
+
   let query = supabaseAdmin
     .from('blood_requests')
-    .update(parsed.value)
+    .update(updateData)
     .eq('request_id', id)
     .in('status', ['OPEN', 'IN_PROGRESS']);
   if (access.user.hospital_id) query = query.eq('hospital_id', access.user.hospital_id);
