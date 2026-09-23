@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import DonorNavbar from '@/components/layout/DonorNavbar';
+import Footer from '@/components/layout/Footer';
 import { basePath, Icon } from '@/components/ui/blood-request';
 
 const items = [
@@ -44,9 +45,10 @@ export default function AdminSidebar({ children, userName }: { children: ReactNo
         <div className="mt-5 flex items-center gap-2 text-xs"><Image src="/logo_bloodConnect.svg" alt="" width={24} height={28} /><span>BloodConnect<small className="block text-[10px] text-[#6480a1]">© 2026 All rights reserved.</small></span></div>
       </div>
     </aside>
-    <div className="min-h-screen md:ml-64">
+    <div className="flex min-h-screen flex-col md:ml-64">
       <DonorNavbar onMenuClick={() => setOpen(true)} />
-      <main id="blood-request-main" className="mx-auto max-w-[1800px] px-3 pb-8 pt-[116px] sm:px-6 md:pt-20">{children}</main>
+      <main id="blood-request-main" className="mx-auto w-full max-w-[1800px] flex-1 px-3 pb-8 pt-[116px] sm:px-6 md:pt-20">{children}</main>
+      <Footer />
     </div>
   </div>;
 }
