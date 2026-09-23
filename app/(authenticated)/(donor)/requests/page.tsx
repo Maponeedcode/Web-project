@@ -9,7 +9,7 @@ import RequestFeed from "@/components/donor/Notifications/RequestFeed";
 import Footer from "@/components/layout/Footer";
 
 import { supabase } from "@/lib/supabase";
-import type { BloodRequest } from "@/types/database";
+import { bangkokToday, type BloodRequest } from "@/types/database";
 
 interface DonorProfile {
   donor_id: string;
@@ -116,6 +116,7 @@ export default function RequestsPage() {
             )
           `)
           .eq("status", "OPEN")
+          .gte("target_date", bangkokToday())
           .eq("blood_type", donorProfile.blood_type)
           .eq("hospitals.province", donorProfile.province)
           .order("created_at", { ascending: false });
@@ -130,7 +131,7 @@ export default function RequestsPage() {
         // ==========================================
         const donorRh = normalizeRh(donorProfile.rh_factor);
 
-        const matchedRequests = (requestData ?? []).filter((request: any) => {
+        const matchedRequests = (requestData ?? []).filter((request) => {
           const requestRh = normalizeRh(request.rh_factor);
           return donorRh !== null && donorRh === requestRh;
         });

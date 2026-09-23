@@ -56,7 +56,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
           ['ที่อยู่', request.address], ['ชื่อผู้ติดต่อ', request.contact], ['เบอร์ติดต่อ', request.phone],
         ]} /></section>
         <section className={`${cardClass} scroll-mt-20`} id="timeline"><SectionTitle icon="clock">ขั้นตอนคำร้อง</SectionTitle>
-          <RequestStatusStepper status={request.status} createdAt={request.createdAt} />
+          <RequestStatusStepper status={request.status} createdAt={request.createdAt} date={request.date} />
         </section>
         <section className={`${cardClass} scroll-mt-20`} id="donors"><SectionTitle icon="users">รายการบริจาคที่เกี่ยวข้อง</SectionTitle><strong className="ml-8 text-xl">{request.responseCount} รายการ</strong><p className="ml-8 mt-1 text-xs text-[#6480a1]">{request.responseCount ? 'พบรายการบริจาคที่เชื่อมกับคำร้องนี้' : 'ยังไม่มีรายการบริจาคที่เชื่อมกับคำร้องนี้'}</p></section>
       </div>

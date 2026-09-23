@@ -19,7 +19,7 @@ async function editableRequest(id: string) {
   if (!id) return { user, request: null, error: 'ไม่พบรหัสคำร้อง' };
   const request = await getBloodRequestForUser(user, id);
   if (!request) return { user, request: null, error: 'ไม่พบคำร้อง หรือคุณไม่มีสิทธิ์จัดการคำร้องนี้' };
-  if (!editableStatuses.has(request.status)) return { user, request, error: 'คำร้องที่เสร็จสิ้นหรือยกเลิกแล้วไม่สามารถแก้ไขได้' };
+  if (!editableStatuses.has(request.status)) return { user, request, error: 'คำร้องนี้สิ้นสุดแล้ว ไม่สามารถแก้ไขหรือปิดคำร้องได้' };
   return { user, request, error: null };
 }
 

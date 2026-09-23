@@ -41,6 +41,7 @@ export const statusLabels = {
   IN_PROGRESS: 'กำลังดำเนินการ',
   FULFILLED: 'เสร็จสิ้น',
   CANCELLED: 'ยกเลิก',
+  EXPIRED: 'สิ้นสุดระยะเวลา / หมดอายุ',
 };
 export const urgencyLabels = { CRITICAL: 'ด่วนมาก', HIGH: 'เร่งด่วน', NORMAL: 'ปกติ' };
 
@@ -54,7 +55,7 @@ export function formatDateTime(value: string) {
 }
 export function shortRequestId(value: string) { return value.slice(0, 8).toUpperCase(); }
 export function statusColor(status: RequestView['status']) {
-  return ({ OPEN: 'blue', IN_PROGRESS: 'orange', FULFILLED: 'green', CANCELLED: 'gray' } as const)[status];
+  return ({ OPEN: 'blue', IN_PROGRESS: 'orange', FULFILLED: 'green', CANCELLED: 'gray', EXPIRED: 'gray' } as const)[status];
 }
 export const cardClass = 'rounded-xl border border-[#dce8f4] bg-white p-5 shadow-sm';
 export const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#c6d6ea] bg-white px-4 py-2 text-sm font-semibold text-[#0e3b6c] transition hover:bg-[#f3f7fb] disabled:cursor-not-allowed disabled:opacity-50';
