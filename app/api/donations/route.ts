@@ -43,12 +43,16 @@ export async function POST(request: Request) {
         {
           error: "Invalid session.",
           details: sessionError?.message,
+          code: sessionError?.code,
+          hint: sessionError?.hint,
         },
         { status: 401 }
       );
     }
 
-    // ตรวจสอบ session หมดอายุ
+    // =========================================
+    // 3. ตรวจสอบ Session หมดอายุ
+    // =========================================
     if (
       session.expires_at &&
       new Date(session.expires_at) < new Date()
@@ -66,11 +70,11 @@ export async function POST(request: Request) {
     console.log("USER ID:", userId);
 
     // =========================================
-    // 3. รับ request_id
+    // 4. รับ request_id
     // =========================================
     const body = await request.json();
 
-    const requestId = body.request_id;
+    const requestId = body?.request_id;
 
     console.log("REQUEST ID:", requestId);
 
@@ -84,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     // =========================================
-    // 4. หา Blood Request
+    // 5. หา Blood Request
     // =========================================
     const {
       data: bloodRequest,
@@ -117,6 +121,7 @@ export async function POST(request: Request) {
           error: "Failed to find blood request.",
           details: requestError.message,
           code: requestError.code,
+          hint: requestError.hint,
         },
         { status: 500 }
       );
@@ -137,35 +142,93 @@ export async function POST(request: Request) {
     );
 
     // =========================================
-    // 5. ตรวจสอบ Status
+    // 6. ตรวจสอบ Status
     // =========================================
-    const currentStatus = effectiveBloodRequestStatus(bloodRequest.status, bloodRequest.target_date);
+    const currentStatus =
+      effectiveBloodRequestStatus(
+        bloodRequest.status,
+        bloodRequest.target_date
+      );
+
+    console.log(
+      "CURRENT STATUS:",
+      currentStatus
+    );
+
     if (currentStatus !== "OPEN") {
       return NextResponse.json(
         {
           error:
             "This blood request is no longer available.",
-          current_status:
-            currentStatus,
+          current_status: currentStatus,
         },
         { status: 409 }
       );
     }
 
     // =========================================
-    // 6. INSERT Donation
+    // 7. ตรวจสอบว่าผู้บริจาคเคยตอบรับหรือยัง
     // =========================================
-    console.log("INSERT DONATION...");
+    const {
+      data: existingDonation,
+      error: existingDonationError,
+    } = await supabaseAdmin
+      .from("donation_records")
+      .select("record_id")
+      .eq("request_id", requestId)
+      .eq("donor_id", userId)
+      .maybeSingle();
+
+    if (existingDonationError) {
+      console.error(
+        "CHECK DONATION ERROR:",
+        existingDonationError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Failed to check existing donation.",
+          details:
+            existingDonationError.message,
+          code:
+            existingDonationError.code,
+          hint:
+            existingDonationError.hint,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (existingDonation) {
+      return NextResponse.json(
+        {
+          error:
+            "You have already accepted this blood request.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // =========================================
+    // 8. INSERT Donation
+    // =========================================
+    console.log(
+      "INSERT INTO donation_records..."
+    );
 
     const {
       data: donation,
       error: donationError,
     } = await supabaseAdmin
-      .from("donations")
+      .from("donation_records")
       .insert({
         request_id: requestId,
         donor_id: userId,
         status: "ACCEPTED",
+
+        // เพิ่ม donation_date
+        donation_date: new Date().toISOString(),
       })
       .select()
       .single();
@@ -178,7 +241,8 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error: "Failed to create donation.",
+          error:
+            "Failed to create donation.",
           details:
             donationError.message,
           code:
@@ -196,7 +260,7 @@ export async function POST(request: Request) {
     );
 
     // =========================================
-    // 7. Update Blood Request
+    // 9. Update Blood Request
     // =========================================
     const {
       error: updateError,
@@ -218,20 +282,21 @@ export async function POST(request: Request) {
     }
 
     // =========================================
-    // 8. Success
+    // 10. Success
     // =========================================
+    console.log(
+      "===== DONATE SUCCESS ====="
+    );
+
     return NextResponse.json(
       {
         message:
           "Donation accepted successfully.",
-
-        donation: donation,
-
+        donation,
         request: bloodRequest,
       },
       { status: 201 }
     );
-
   } catch (error) {
     console.error(
       "DONATE API ERROR:",
