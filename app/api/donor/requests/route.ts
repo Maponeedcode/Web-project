@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getDonorSessionUser } from "@/lib/donorSession";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { bangkokToday } from "@/types/database";
 
 const normalizeRh = (rh?: string | null) => {
   const value = rh?.trim().toUpperCase();
@@ -65,6 +66,7 @@ export async function GET() {
       )
     `)
     .eq("status", "OPEN")
+    .gte("target_date", bangkokToday())
     .eq("blood_type", profile.blood_type)
     .eq("hospitals.province", profile.province)
     .order("created_at", { ascending: false });

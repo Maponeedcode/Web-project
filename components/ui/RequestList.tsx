@@ -5,7 +5,7 @@ import { useState } from 'react';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import {
   type RequestView, Badge, Heading, Icon, basePath, buttonClass, cardClass,
-  formatDate, inputClass, shortRequestId, statusColor, statusLabels, urgencyLabels,
+  displayedRequestStatus, formatDate, inputClass, shortRequestId, statusColor, statusLabels, urgencyLabels,
 } from './blood-request';
 
 const pageSize = 6;
@@ -24,7 +24,7 @@ export default function RequestList({ requests }: { requests: RequestView[] }) {
     `${request.id} ${request.hospital} ${request.province}`.toLowerCase().includes(query.trim().toLowerCase()) &&
     (!blood || request.blood === blood) &&
     (!urgency || request.urgency === urgency) &&
-    (!status || request.status === status) &&
+    (!status || displayedRequestStatus(request) === status) &&
     (!date || request.date === date),
   );
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -32,7 +32,7 @@ export default function RequestList({ requests }: { requests: RequestView[] }) {
   const rows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const stats = [
     { title: 'คำร้องทั้งหมด', count: requests.length, icon: 'file' as const, color: 'bg-[#ffeaed] text-[#dc2626]', hint: 'คำร้องของโรงพยาบาลนี้' },
-    { title: 'เปิดรับบริจาค', count: requests.filter(r => r.status === 'OPEN').length, icon: 'clock' as const, color: 'bg-[#fff4e2] text-[#d78500]', hint: 'รอผู้บริจาคตอบรับ' },
+    { title: 'เปิดรับบริจาค', count: requests.filter(r => displayedRequestStatus(r) === 'OPEN').length, icon: 'clock' as const, color: 'bg-[#fff4e2] text-[#d78500]', hint: 'รอผู้บริจาคตอบรับ' },
     { title: 'กำลังดำเนินการ', count: requests.filter(r => r.status === 'IN_PROGRESS').length, icon: 'users' as const, color: 'bg-[#e5f3ff] text-[#147ee9]', hint: 'อยู่ระหว่างดำเนินการ' },
     { title: 'เสร็จสิ้น', count: requests.filter(r => r.status === 'FULFILLED').length, icon: 'check' as const, color: 'bg-[#e0f7eb] text-[#009c65]', hint: 'ได้รับเลือดครบแล้ว' },
   ];
@@ -72,7 +72,7 @@ export default function RequestList({ requests }: { requests: RequestView[] }) {
             <td className="px-3 py-3"><UrgencyBadge urgency={request.urgency} /></td>
             <td className="px-3 py-3">{request.units}</td>
             <td className="px-3 py-3 whitespace-nowrap">{formatDate(request.date)}</td>
-            <td className="px-3 py-3"><Badge color={statusColor(request.status)}>{statusLabels[request.status]}</Badge></td>
+            <td className="px-3 py-3"><Badge color={statusColor(displayedRequestStatus(request))}>{statusLabels[displayedRequestStatus(request)]}</Badge></td>
             <td className="px-3 py-3"><Link className="whitespace-nowrap underline underline-offset-4" aria-label={`ดูคำร้อง ${request.id}`} href={`${basePath}/${request.id}`}>ดูรายละเอียด →</Link></td>
           </tr>)}
           {!rows.length && <tr><td colSpan={9} className="px-5 py-10 text-center whitespace-normal">{requests.length ? 'ไม่พบคำร้องที่ตรงกับตัวกรอง ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง' : 'โรงพยาบาลนี้ยังไม่มีคำร้องขอเลือด'}</td></tr>}

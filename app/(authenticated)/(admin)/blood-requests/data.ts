@@ -49,6 +49,12 @@ const requestColumns = `
   )
 `;
 
+const urgencyOrder: Record<BloodRequest['urgency_level'], number> = {
+  CRITICAL: 0,
+  HIGH: 1,
+  NORMAL: 2,
+};
+
 function getHospital(relation: BloodRequestRow['hospitals']) {
   return Array.isArray(relation) ? relation[0] : relation;
 }
@@ -72,6 +78,7 @@ function toRequestView(row: BloodRequestRow): RequestView {
     urgency: row.urgency_level,
     status: row.status,
     date: row.target_date,
+    target_date: row.target_date,
     createdAt: row.created_at,
     address: hospital.address,
     contact: hospital.contact_person || 'ไม่ระบุ',
@@ -112,7 +119,11 @@ export async function getBloodRequestsForUser(user: AuthUser): Promise<RequestVi
   const { data, error } = await query;
   if (error) throw new Error(`โหลดคำร้องขอเลือดไม่สำเร็จ: ${error.message}`);
 
-  return ((data ?? []) as unknown as BloodRequestRow[]).map(toRequestView);
+  return ((data ?? []) as unknown as BloodRequestRow[])
+    .map(toRequestView)
+    .sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
+      || b.createdAt.localeCompare(a.createdAt)
+      || a.id.localeCompare(b.id));
 }
 
 export async function getBloodRequestForUser(user: AuthUser, requestId: string): Promise<RequestView | null> {

@@ -17,7 +17,7 @@ export interface BloodRequest {
   urgency_level: 'CRITICAL' | 'HIGH' | 'NORMAL';
   purpose: string;
   target_date: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'FULFILLED' | 'CANCELLED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'FULFILLED' | 'CANCELLED' | 'EXPIRED';
   created_at: string;
   hospitals?: {
     name: string;
@@ -40,4 +40,20 @@ export interface DonationRecord {
   status: string;
   notes: string | null;
   created_at: string;
+}
+
+export function bangkokToday(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const value = (part: 'year' | 'month' | 'day') => parts.find(item => item.type === part)?.value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+export function effectiveBloodRequestStatus(
+  status: BloodRequest['status'],
+  targetDate: string,
+  today = bangkokToday(),
+): BloodRequest['status'] {
+  return status === 'OPEN' && targetDate < today ? 'EXPIRED' : status;
 }
