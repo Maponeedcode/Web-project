@@ -17,7 +17,7 @@ export interface BloodRequest {
   urgency_level: 'CRITICAL' | 'HIGH' | 'NORMAL';
   purpose: string;
   target_date: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'FULFILLED' | 'CANCELLED' | 'EXPIRED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'FULFILLED' | 'CANCELLED';
   created_at: string;
   hospitals?: {
     name: string;
@@ -54,6 +54,6 @@ export function effectiveBloodRequestStatus(
   status: BloodRequest['status'],
   targetDate: string,
   today = bangkokToday(),
-): BloodRequest['status'] {
+): BloodRequest['status'] | 'EXPIRED' {
   return status === 'OPEN' && targetDate < today ? 'EXPIRED' : status;
 }

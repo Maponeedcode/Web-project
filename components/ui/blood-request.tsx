@@ -42,7 +42,9 @@ export function isRequestExpired(date: string, status: BloodRequest['status']) {
   return status === 'OPEN' && date < bangkokToday();
 }
 
-export function displayedRequestStatus(request: Pick<RequestView, 'date' | 'status'>): RequestView['status'] {
+export function displayedRequestStatus(
+  request: Pick<RequestView, 'date' | 'status'>
+): RequestView['status'] | 'EXPIRED' {
   return isRequestExpired(request.date, request.status) ? 'EXPIRED' : request.status;
 }
 
