@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { closeBloodRequest, type RequestActionState } from '@/app/admin/blood-requests/[id]/actions';
+import { closeBloodRequest, type RequestActionState } from '@/app/(authenticated)/admin/blood-requests/[id]/actions';
 
 const initialState: RequestActionState = { error: null };
 

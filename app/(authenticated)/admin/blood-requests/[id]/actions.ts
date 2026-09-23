@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { getBloodRequestForUser } from '@/lib/bloodRequests';
-import { parseBloodRequestForm } from '@/lib/bloodRequestForm';
+import { getBloodRequestForUser } from '../data';
+import { parseBloodRequestForm } from '../form';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 

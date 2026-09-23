@@ -1,5 +1,5 @@
-import CreateRequest from '@/components/blood-requests/CreateRequest';
-import { getHospitalForUser } from '@/lib/bloodRequests';
+import CreateRequest from '@/components/ui/CreateRequest';
+import { getHospitalForUser } from '../data';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 
 export default async function Page() {

@@ -298,3 +298,30 @@
 .blood-request-ui .confirm-dialog { width: min(460px, 100%); background: white; border-radius: 10px; padding: 24px; box-shadow: 0 20px 60px rgb(14 59 108 / 25%); }
 .blood-request-ui .confirm-dialog h2 { margin-bottom: 8px; }
 .blood-request-ui .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+
+/* Admin shell reuses the shared donor navbar and provides its own sidebar. */
+.blood-request-ui .admin-sidebar { z-index: 60; }
+.blood-request-ui .admin-sidebar .brand { color: var(--navy); }
+.blood-request-ui .admin-sidebar .brand-name span { color: var(--navy); }
+.blood-request-ui .admin-sidebar .brand-name { color: var(--red); }
+.blood-request-ui .admin-sidebar-overlay { display: none; }
+.blood-request-ui .workspace { min-height: 100vh; }
+.blood-request-ui .workspace main { padding-top: 80px; }
+/* Keep room for the shared SearchBar icon; the global input rule resets Tailwind padding. */
+.blood-request-ui .workspace input[type="text"] { padding-left: 44px; }
+@media(min-width:1251px) { .blood-request-ui .workspace>header { margin-left: 248px; } }
+@media(min-width:1001px) and (max-width:1250px) { .blood-request-ui .workspace>header { margin-left: 215px; } }
+@media(min-width:701px) and (max-width:1000px) { .blood-request-ui .workspace>header { margin-left: 185px; } }
+@media(max-width:700px) {
+  .blood-request-ui .admin-sidebar { position: fixed; inset: 0 auto 0 0; width: min(290px, 86vw); height: 100dvh; padding: 18px 14px; border-right: 1px solid var(--line); border-bottom: 0; transform: translateX(-105%); transition: transform .25s ease; }
+  .blood-request-ui .admin-sidebar.is-open { transform: translateX(0); }
+  .blood-request-ui .admin-sidebar .profile, .blood-request-ui .admin-sidebar .sidebar-bottom { display: flex; }
+  .blood-request-ui .admin-sidebar .sidebar-bottom { display: block; }
+  .blood-request-ui .admin-sidebar nav { position: static; }
+  .blood-request-ui .admin-sidebar .nav-item { padding: 13px 18px; min-height: 47px; }
+  .blood-request-ui .admin-sidebar .nav-item .icon { display: block; }
+  .blood-request-ui .admin-sidebar .inactive { display: flex; }
+  .blood-request-ui .admin-sidebar-overlay { display: block; position: fixed; inset: 0; z-index: 55; background: rgb(15 23 42 / 38%); border: 0; }
+  .blood-request-ui .workspace { margin: 0; }
+  .blood-request-ui .workspace main { padding: 116px 12px 18px; }
+}

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { type RequestView, formatDate, formatDateTime, shortRequestId, statusColor, statusLabels, urgencyColor, urgencyLabels } from './demo-data';
-import { Badge, basePath, Heading, Icon, SectionTitle } from './ui';
+import { type RequestView, formatDate, formatDateTime, shortRequestId, statusColor, statusLabels, urgencyColor, urgencyLabels, Badge, basePath, Heading, Icon, SectionTitle } from './blood-request';
 import CloseRequestButton from './CloseRequestButton';
 
 function Details({ rows }: { rows: [string, ReactNode][] }) { return <dl className="detail-list">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>; }

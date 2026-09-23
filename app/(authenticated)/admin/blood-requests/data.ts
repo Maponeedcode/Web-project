@@ -3,7 +3,7 @@ import 'server-only';
 import type { AuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import type { BloodRequest, Hospital } from '@/types/database';
-import type { RequestView } from '@/components/blood-requests/demo-data';
+import type { RequestView } from '@/components/ui/blood-request';
 
 type HospitalRow = {
   name: string;

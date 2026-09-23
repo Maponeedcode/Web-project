@@ -1,8 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { type RequestView, formatDate, shortRequestId, statusLabels, urgencyLabels, statusColor, urgencyColor } from './demo-data';
-import { Badge, basePath, Heading, Icon } from './ui';
+import { type RequestView, formatDate, shortRequestId, statusLabels, urgencyLabels, statusColor, urgencyColor, Badge, basePath, Heading, Icon } from './blood-request';
 
 export default function RequestList({ requests }: { requests: RequestView[] }) {
   const [query, setQuery] = useState('');

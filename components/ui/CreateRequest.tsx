@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import type { Hospital } from '@/types/database';
-import { createBloodRequest, type CreateRequestState } from '@/app/admin/blood-requests/create/actions';
-import { basePath, Heading, Icon, SectionTitle } from './ui';
+import { createBloodRequest, type CreateRequestState } from '@/app/(authenticated)/admin/blood-requests/create/actions';
+import { basePath, Heading, Icon, SectionTitle } from './blood-request';
 
 const initialState: CreateRequestState = { error: null };
 

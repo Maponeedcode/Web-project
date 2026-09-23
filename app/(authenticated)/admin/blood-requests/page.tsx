@@ -1,5 +1,5 @@
-import RequestList from '@/components/blood-requests/RequestList';
-import { getBloodRequestsForUser } from '@/lib/bloodRequests';
+import RequestList from '@/components/ui/RequestList';
+import { getBloodRequestsForUser } from './data';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 
 export default async function Page() {

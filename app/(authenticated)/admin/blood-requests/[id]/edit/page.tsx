@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
-import EditRequest from '@/components/blood-requests/EditRequest';
-import { getBloodRequestForUser, getHospitalForUser } from '@/lib/bloodRequests';
+import EditRequest from '@/components/ui/EditRequest';
+import { getBloodRequestForUser, getHospitalForUser } from '../../data';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {

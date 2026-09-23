@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { parseBloodRequestForm } from '@/lib/bloodRequestForm';
+import { parseBloodRequestForm } from '../form';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 

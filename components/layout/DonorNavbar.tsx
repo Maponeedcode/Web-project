@@ -301,7 +301,11 @@ export default function DonorNavbar({
                       text-slate-400
                     "
                   >
-                    Donor
+                    {user?.role === "hospital_admin"
+                      ? "เจ้าหน้าที่โรงพยาบาล"
+                      : user?.role === "system_admin"
+                        ? "ผู้ดูแลระบบ"
+                        : "ผู้บริจาค"}
                   </p>
                 </div>
               </button>
