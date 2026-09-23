@@ -6,9 +6,10 @@ import { getBloodRequestForUser } from '../data';
 import { parseBloodRequestForm } from '../form';
 import { requireHospitalAdmin } from '@/lib/requireHospitalAdmin';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { effectiveBloodRequestStatus } from '@/types/database';
 
 export type RequestActionState = { error: string | null };
-const editableStatuses = new Set(['OPEN', 'IN_PROGRESS', 'EXPIRED']);
+const editableStatuses = new Set(['OPEN', 'IN_PROGRESS']);
 
 function requestId(formData: FormData) {
   return String(formData.get('request_id') ?? '').trim();
@@ -19,7 +20,7 @@ async function editableRequest(id: string) {
   if (!id) return { user, request: null, error: 'ไม่พบรหัสคำร้อง' };
   const request = await getBloodRequestForUser(user, id);
   if (!request) return { user, request: null, error: 'ไม่พบคำร้อง หรือคุณไม่มีสิทธิ์จัดการคำร้องนี้' };
-  if (!editableStatuses.has(request.status)) return { user, request, error: 'คำร้องนี้สิ้นสุดแล้ว ไม่สามารถแก้ไขหรือปิดคำร้องได้' };
+  if (!editableStatuses.has(request.status)) return { user, request, error: 'คำร้องที่เสร็จสิ้นหรือยกเลิกแล้วไม่สามารถแก้ไขได้' };
   return { user, request, error: null };
 }
 
@@ -34,9 +35,13 @@ export async function updateBloodRequest(
   const parsed = parseBloodRequestForm(formData);
   if (!parsed.success) return { error: parsed.error };
 
+  // An overdue OPEN request may only have its target date extended.
+  const isExpired = effectiveBloodRequestStatus(access.request!.status, access.request!.date) === 'EXPIRED';
+  const updateData = isExpired ? { target_date: parsed.value.target_date } : parsed.value;
+
   let query = supabaseAdmin
     .from('blood_requests')
-    .update(parsed.value)
+    .update(updateData)
     .eq('request_id', id)
     .in('status', ['OPEN', 'IN_PROGRESS']);
   if (access.user.hospital_id) query = query.eq('hospital_id', access.user.hospital_id);

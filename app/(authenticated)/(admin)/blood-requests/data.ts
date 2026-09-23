@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { AuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { effectiveBloodRequestStatus, type BloodRequest, type Hospital } from '@/types/database';
+import type { BloodRequest, Hospital } from '@/types/database';
 import type { RequestView } from '@/components/ui/blood-request';
 
 type HospitalRow = {
@@ -76,8 +76,9 @@ function toRequestView(row: BloodRequestRow): RequestView {
     blood: bloodLabel(row.blood_type, row.rh_factor),
     units: row.units_needed,
     urgency: row.urgency_level,
-    status: effectiveBloodRequestStatus(row.status, row.target_date),
+    status: row.status,
     date: row.target_date,
+    target_date: row.target_date,
     createdAt: row.created_at,
     address: hospital.address,
     contact: hospital.contact_person || 'ไม่ระบุ',
