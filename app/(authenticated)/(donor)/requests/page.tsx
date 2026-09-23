@@ -8,16 +8,7 @@ import DonorSideBar from "@/components/layout/DonorSideBar";
 import RequestFeed from "@/components/donor/Notifications/RequestFeed";
 import Footer from "@/components/layout/Footer";
 
-import { supabase } from "@/lib/supabase";
-import { bangkokToday, type BloodRequest } from "@/types/database";
-
-interface DonorProfile {
-  donor_id: string;
-  blood_type: "A" | "B" | "AB" | "O";
-  rh_factor: "Positive" | "Negative" | "+" | "-";
-  province: string;
-  is_ready: boolean;
-}
+import type { BloodRequest } from "@/types/database";
 
 export default function RequestsPage() {
   const router = useRouter();
@@ -25,118 +16,27 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState<BloodRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ฟังก์ชันแปลง Rh Factor ให้เป็นรูปแบบสากล (+ หรือ -) เพื่อนำมา match กันได้อย่างแม่นยำ
-  const normalizeRh = (rh?: string | null) => {
-    if (!rh) return null;
-    const clean = rh.trim().toUpperCase();
-    if (clean === "+" || clean.startsWith("POS")) return "+";
-    if (clean === "-" || clean.startsWith("NEG")) return "-";
-    return null;
-  };
-
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
 
-        // ==========================================
-        // 1. ดึงข้อมูล User จาก /api/auth/check
-        // ==========================================
-        const authRes = await fetch("/api/auth/check", {
-          method: "GET",
-          credentials: "include", // ส่ง Cookie token แนบไปด้วย
+        const response = await fetch("/api/donor/requests", {
+          credentials: "include",
         });
 
-        if (!authRes.ok) {
-          console.warn("Unauthorized or session expired, redirecting to login...");
-          router.push("/login");
+        if (response.status === 401) {
+          router.replace("/login");
           return;
         }
 
-        const authData = await authRes.json();
-        // ดึง user_id ตามโครงสร้าง response: { user: { user_id, ... } }
-        const userId = authData?.user?.user_id;
+        const data = await response.json();
 
-        if (!userId) {
-          console.warn("User ID not found in session, redirecting to login...");
-          router.push("/login");
-          return;
+        if (!response.ok) {
+          throw new Error(data.error || "ไม่สามารถโหลดรายการคำขอได้");
         }
 
-        console.log("Logged in user ID:", userId);
-
-        // ==========================================
-        // 2. ดึง Donor Profile จาก Supabase
-        // ==========================================
-        const { data: donorProfile, error: profileError } = await supabase
-          .from("donor_profiles")
-          .select("donor_id, blood_type, rh_factor, province, is_ready")
-          .eq("donor_id", userId)
-          .single<DonorProfile>();
-
-        if (profileError || !donorProfile) {
-          console.error("Donor profile error:", profileError);
-          return;
-        }
-
-        // ==========================================
-        // 3. ตรวจสอบสถานะความพร้อมบริจาค
-        // ==========================================
-        if (!donorProfile.is_ready) {
-          console.log("Donor is currently not ready to donate.");
-          setRequests([]);
-          return;
-        }
-
-        // ==========================================
-        // 4. ดึง Blood Requests พร้อม Join ข้อมูล Hospitals
-        // ==========================================
-        const { data: requestData, error: requestError } = await supabase
-          .from("blood_requests")
-          .select(`
-            request_id,
-            hospital_id,
-            blood_type,
-            rh_factor,
-            units_needed,
-            urgency_level,
-            purpose,
-            target_date,
-            status,
-            created_at,
-            hospitals!inner (
-              hospital_id,
-              name,
-              province
-            ),
-            donation_records (
-              record_id,
-              volume_ml,
-              status
-            )
-          `)
-          .eq("status", "OPEN")
-          .gte("target_date", bangkokToday())
-          .eq("blood_type", donorProfile.blood_type)
-          .eq("hospitals.province", donorProfile.province)
-          .order("created_at", { ascending: false });
-
-        if (requestError) {
-          console.error("Blood request error:", requestError);
-          return;
-        }
-
-        // ==========================================
-        // 5. Match Rh Factor ระหว่าง Donor กับ Request
-        // ==========================================
-        const donorRh = normalizeRh(donorProfile.rh_factor);
-
-        const matchedRequests = (requestData ?? []).filter((request) => {
-          const requestRh = normalizeRh(request.rh_factor);
-          return donorRh !== null && donorRh === requestRh;
-        });
-
-        setRequests(matchedRequests as unknown as BloodRequest[]);
+        setRequests((data.requests ?? []) as BloodRequest[]);
       } catch (err) {
         console.error("Unexpected error:", err);
       } finally {

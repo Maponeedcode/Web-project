@@ -30,6 +30,18 @@ export interface BloodRequest {
   }[];
 }
 
+export interface DonationRecord {
+  record_id: string;
+  donor_id: string;
+  request_id: string | null;
+  donation_date: string;
+  volume_ml: number | null;
+  blood_test_result: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
+
 export function bangkokToday(now = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
