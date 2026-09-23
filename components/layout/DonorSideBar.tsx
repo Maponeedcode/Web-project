@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import {
   faClockRotateLeft,
   faBell,
   faRightFromBracket,
-  faBars,
   faXmark,
   faHouse,
 } from "@fortawesome/free-solid-svg-icons";
@@ -23,17 +21,17 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    label: "Dashboard",
+    label: "หน้าหลัก",
     href: "/dashboard",
     icon: faHouse,
   },
   {
-    label: "History",
+    label: "ประวัติการบริจาค",
     href: "/history",
     icon: faClockRotateLeft,
   },
   {
-    label: "Notifications",
+    label: "การแจ้งเตือน",
     href: "/requests",
     icon: faBell,
   },
@@ -43,56 +41,31 @@ interface DonorSidebarProps {
   userName?: string;
   bloodGroup?: string;
   onLogout?: () => void;
+
+  // Mobile Sidebar Control
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function DonorSidebar({
-  userName = "Donor",
+  userName = "ผู้บริจาค",
   bloodGroup = "O+",
   onLogout,
+  isOpen,
+  onClose,
 }: DonorSidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* ================================================= */}
-      {/* MOBILE HAMBURGER */}
-      {/* ================================================= */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        aria-label="Open sidebar"
-        className="
-          fixed
-          left-3
-          top-3
-          z-[60]
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-          rounded-xl
-          text-slate-600
-          transition
-          hover:bg-slate-100
-          md:hidden
-        "
-      >
-        <FontAwesomeIcon
-          icon={faBars}
-          className="h-5 w-5"
-        />
-      </button>
-
       {/* ================================================= */}
       {/* MOBILE OVERLAY */}
       {/* ================================================= */}
       {isOpen && (
         <button
           type="button"
-          aria-label="Close sidebar"
-          onClick={() => setIsOpen(false)}
+          aria-label="ปิดเมนู"
+          onClick={onClose}
           className="
             fixed
             inset-0
@@ -150,10 +123,9 @@ export default function DonorSidebar({
           {/* Logo */}
           <Link
             href="/dashboard"
-            onClick={() => setIsOpen(false)}
+            onClick={onClose}
             className="flex items-center gap-3"
           >
-            {/* Logo Image */}
             <div
               className="
                 flex
@@ -177,6 +149,7 @@ export default function DonorSidebar({
                 <span className="text-[#0e3b6c]">
                   Blood
                 </span>
+
                 <span className="text-[#ed1b32]">
                   Connect
                 </span>
@@ -191,8 +164,8 @@ export default function DonorSidebar({
           {/* Close Button */}
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close sidebar"
+            onClick={onClose}
+            aria-label="ปิดเมนู"
             className="
               flex
               h-9
@@ -225,12 +198,11 @@ export default function DonorSidebar({
               px-4
               text-[11px]
               font-semibold
-              uppercase
               tracking-wider
               text-slate-400
             "
           >
-            Menu
+            เมนู
           </p>
 
           {/* Menu Items */}
@@ -244,7 +216,7 @@ export default function DonorSidebar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={onClose}
                   className={`
                     group
                     flex
@@ -322,7 +294,7 @@ export default function DonorSidebar({
               </p>
 
               <p className="text-xs text-slate-400">
-                Donor • {bloodGroup}
+                ผู้บริจาค • {bloodGroup}
               </p>
             </div>
           </div>
@@ -357,7 +329,7 @@ export default function DonorSidebar({
                 className="h-4 w-4"
               />
 
-              Logout
+              ออกจากระบบ
             </button>
           )}
         </div>
