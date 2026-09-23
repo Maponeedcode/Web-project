@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionToken } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { bangkokToday } from "@/types/database";
 
 // =====================================================
 // GET /api/auth/requests
@@ -95,6 +96,7 @@ export async function GET() {
         )
       `)
       .eq("status", "OPEN")
+      .gte("target_date", bangkokToday())
       .order("created_at", {
         ascending: false,
       });
