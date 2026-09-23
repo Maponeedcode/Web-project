@@ -21,17 +21,17 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    label: "Dashboard",
+    label: "หน้าหลัก",
     href: "/dashboard",
     icon: faHouse,
   },
   {
-    label: "History",
+    label: "ประวัติการบริจาค",
     href: "/history",
     icon: faClockRotateLeft,
   },
   {
-    label: "Notifications",
+    label: "การแจ้งเตือน",
     href: "/requests",
     icon: faBell,
   },
@@ -210,6 +210,7 @@ export default function DonorSideBar({
             MENU
           </p>
 
+          {/* Menu Items */}
           <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive =

@@ -3,7 +3,7 @@ import HeroSection from '@/components/home/HeroSection';
 import RequestBrowser from '@/components/home/RequestBrowser';
 import HospitalDirectory from '@/components/home/HospitalDirectory';
 import DonorGuide from '@/components/home/DonorGuide';
-import { BloodRequest, Hospital } from '@/types/database';
+import { bangkokToday, type BloodRequest, type Hospital } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +33,7 @@ async function getLandingData() {
         )
       `)
       .eq('status', 'OPEN')
+      .gte('target_date', bangkokToday())
       .order('urgency_level', { ascending: true}) // Sort By Urgency level first ( Critical -> H -> N)
       .order('created_at', { ascending: false }), // Then sort by lastest case
 
