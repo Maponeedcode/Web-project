@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -18,7 +19,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({
-  placeholder = "Search...",
+  placeholder = "ค้นหาโรงพยาบาล / จังหวัด...",
 }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
