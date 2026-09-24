@@ -69,7 +69,7 @@ export async function GET() {
       .limit(3),
     supabaseAdmin
       .from("donation_records")
-      .select("request_id, status, created_at")
+      .select("record_id, request_id, status, created_at")
       .eq("donor_id", user.user_id)
       .in("status", ["ACCEPTED", "PENDING"])
       .order("created_at", { ascending: false })
@@ -121,7 +121,11 @@ export async function GET() {
       );
     }
 
-    activeRequest = data;
+    activeRequest = {
+      ...data,
+      donation_record_id: activeDonation.record_id,
+      donation_status: activeDonation.status,
+    };
   }
 
   return NextResponse.json({ user, profile, matchedRequests, activeRequest });
