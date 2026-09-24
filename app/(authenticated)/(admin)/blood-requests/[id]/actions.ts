@@ -84,3 +84,30 @@ export async function closeBloodRequest(
   revalidatePath(`/blood-requests/${id}`);
   redirect(`/blood-requests/${id}`);
 }
+
+export async function deleteBloodRequest(
+  _previousState: RequestActionState,
+  formData: FormData,
+): Promise<RequestActionState> {
+  const id = requestId(formData);
+  const user = await requireHospitalAdmin();
+  if (!id) return { error: 'ไม่พบรหัสคำร้อง' };
+
+  const request = await getBloodRequestForUser(user, id);
+  if (!request) return { error: 'ไม่พบคำร้อง หรือคุณไม่มีสิทธิ์ลบคำร้องนี้' };
+  if (request.responseCount > 0) {
+    return { error: 'คำร้องนี้มีรายการบริจาคแล้ว จึงลบไม่ได้ กรุณาปิดคำร้องแทน' };
+  }
+
+  let query = supabaseAdmin.from('blood_requests').delete().eq('request_id', id);
+  if (user.hospital_id) query = query.eq('hospital_id', user.hospital_id);
+  const { data, error } = await query.select('request_id').maybeSingle();
+  if (error) {
+    console.error('Delete blood request failed:', error);
+    return { error: 'ลบคำร้องไม่สำเร็จ กรุณาลองอีกครั้ง' };
+  }
+  if (!data) return { error: 'ไม่พบคำร้อง หรือคำร้องถูกลบไปแล้ว' };
+
+  revalidatePath('/blood-requests');
+  redirect('/blood-requests');
+}
