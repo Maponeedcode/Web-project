@@ -1,41 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminSidebar from '@/components/layout/AdminSidebar'; // หรือ Sidebar ของคุณ
+import AdminSidebar from '@/components/layout/AdminSidebar';
 
 export default function HospitalManagementPage() {
-  // สร้าง State สำหรับเก็บชื่อแอดมินที่กำลังใช้งานอยู่
   const [adminName, setAdminName] = useState('สุทธิวงค์ ทิพย์มาก');
-
-  // ตรวจสอบและดึงชื่อจาก localStorage เผื่อมีการล็อกอินเปลี่ยนชื่อแอดมินคนอื่นเข้ามา
-  useEffect(() => {
-    const savedUser = localStorage.getItem('adminName');
-    if (savedUser) {
-      setAdminName(savedUser);
-    }
-  }, []);
-
-  // สถานะข้อมูลโรงพยาบาล
-  const [hospital, setHospital] = useState({
-    id: 'HSP-BKK-002',
-    name: 'โรงพยาบาลจุฬาลงกรณ์ สภากาชาดไทย',
-    province: 'กรุงเทพมหานคร',
-    address: 'เลขที่ 1873 ถนนพระรามที่ 4 แขวงปทุมวัน เขตปทุมวัน กรุงเทพมหานคร 10330\nอาคารภูมิสิริมังคลานุสรณ์ ชั้น 2 ฝ่ายเวชศาสตร์ชันสูตร',
-    phone: '02-256-4300 ต่อ 3456',
-    coordinator: 'คุณวรรณา ใจมั่น',
-    coordinatorRole: 'หัวหน้าห้องรับบริจาค',
-    hours: 'จันทร์ – ศุกร์ 08:30–16:30 น. / เสาร์ – อาทิตย์ 08:30–15:30 น.',
-    status: 'เปิดรับบริจาคปกติ'
-  });
+  const [hospital, setHospital] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState(hospital);
+  const [formData, setFormData] = useState<any>(null);
+
+  // ดึงข้อมูลจาก API แทนการใช้ localStorage
+  useEffect(() => {
+    async function fetchHospitalData() {
+      try {
+        const response = await fetch('/api/hospitals');
+        const result = await response.json();
+        if (result.success) {
+          setHospital(result.data);
+          setFormData(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch hospital data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchHospitalData();
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setHospital(formData);
     setIsModalOpen(false);
+    // หมายเหตุ: ในขั้นตอนถัดไป สามารถเขียนฟังก์ชันส่งค่า PUT/PATCH ไปอัปเดต Supabase ผ่าน API ได้ที่นี่
   };
+
+  if (loading || !hospital) {
+    return (
+      <AdminSidebar userName={adminName}>
+        <div className="flex h-64 items-center justify-center text-slate-500">
+          กำลังโหลดข้อมูลโรงพยาบาล...
+        </div>
+      </AdminSidebar>
+    );
+  }
 
   return (
     <AdminSidebar userName={adminName}>
@@ -43,16 +54,21 @@ export default function HospitalManagementPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-2xl bg-white p-6 shadow-sm border border-slate-100 gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 text-2xl">
-              🏥
+            <div className="flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              {/* เปลี่ยนจาก Emoji เป็น SVG Icon */}
+              <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">โรงพยาบาลในความดูแลของฉัน <span className="text-sm font-normal text-slate-500">(My Assigned Hospitals)</span></h1>
+              <h1 className="text-xl font-bold text-slate-900">
+                โรงพยาบาลในความดูแลของฉัน <span className="text-sm font-normal text-slate-500">(My Assigned Hospitals)</span>
+              </h1>
               <p className="text-sm text-slate-500">ตรวจสอบและอัปเดตข้อมูลสถานที่ตั้ง เบอร์ติดต่อตรง และเวลาทำการของสถานพยาบาลที่คุณรับผิดชอบ</p>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-700 border border-blue-100">
-            🛡️ ดูแล 1 แห่ง
+            ดูแล 1 แห่ง
           </span>
         </div>
 
@@ -92,16 +108,20 @@ export default function HospitalManagementPage() {
                   👤 ผู้ประสานงาน
                 </span>
                 <p className="text-lg font-bold text-slate-900">{hospital.coordinator}</p>
-                <p className="text-xs text-slate-500">{hospital.coordinatorRole}</p>
+                <p className="text-xs text-slate-500">{hospital.coordinator_role}</p>
               </div>
             </div>
 
-            {/* Operating Hours */}
-            <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-100 space-y-1">
+            {/* Operating Hours (Updated Schema Structure) */}
+            <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-100 space-y-2">
               <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
                 🕒 เวลาทำการ
               </span>
-              <p className="text-sm font-medium text-slate-800">{hospital.hours}</p>
+              <div className="text-sm font-medium text-slate-800 space-y-0.5">
+                <p>• วันจันทร์ - ศุกร์: {hospital.operating_hours?.weekday}</p>
+                <p>• วันเสาร์ - อาทิตย์: {hospital.operating_hours?.weekend}</p>
+                <p className="text-xs text-slate-500 pt-1">หมายเหตุ: {hospital.operating_hours?.note}</p>
+              </div>
             </div>
 
             {/* Action Button */}
@@ -110,7 +130,11 @@ export default function HospitalManagementPage() {
                 onClick={() => { setFormData(hospital); setIsModalOpen(true); }}
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
               >
-                ✏️ แก้ไขข้อมูล (Edit Details)
+                {/* SVG Icon แทน Emoji ดินสอ */}
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                แก้ไขข้อมูล (Edit Details)
               </button>
             </div>
           </div>
@@ -123,7 +147,11 @@ export default function HospitalManagementPage() {
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-600 text-lg">✏️</span>
+                <span className="flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                  <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </span>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">แก้ไขข้อมูลโรงพยาบาล</h3>
                   <p className="text-xs text-slate-500">อัปเดตที่อยู่ เบอร์ติดต่อตรง ผู้ประสานงาน และเวลาทำการ</p>
@@ -133,7 +161,6 @@ export default function HospitalManagementPage() {
             </div>
 
             <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              {/* Non-editable */}
               <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 space-y-3">
                 <span className="text-xs font-bold text-slate-500 flex items-center gap-1">🔒 ข้อมูลที่ไม่สามารถแก้ไขได้</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -152,7 +179,6 @@ export default function HospitalManagementPage() {
                 </div>
               </div>
 
-              {/* Editable Fields */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700">ที่อยู่แบบละเอียด *</label>
@@ -185,14 +211,32 @@ export default function HospitalManagementPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700">เวลาทำการ *</label>
-                  <input
-                    type="text"
-                    value={formData.hours}
-                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-red-500 focus:outline-none"
-                  />
+                {/* ฟิลด์เวลาทำการแยกย่อยตาม Schema ใหม่ */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700">เวลาทำการ (จันทร์ - ศุกร์) *</label>
+                    <input
+                      type="text"
+                      value={formData.operating_hours?.weekday || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        operating_hours: { ...formData.operating_hours, weekday: e.target.value }
+                      })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700">เวลาทำการ (เสาร์ - อาทิตย์) *</label>
+                    <input
+                      type="text"
+                      value={formData.operating_hours?.weekend || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        operating_hours: { ...formData.operating_hours, weekend: e.target.value }
+                      })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
