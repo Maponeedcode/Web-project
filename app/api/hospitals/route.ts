@@ -1,34 +1,49 @@
 import { NextResponse } from 'next/server';
-// สมมติว่าคุณมีไฟล์ client สำหรับเชื่อมต่อ Supabase
-// import { supabase } from '@/lib/supabase'; 
 
+// ข้อมูลจำลองที่โครงสร้างตรงกับ Schema ของตาราง hospitals
+let mockHospitals = [
+  {
+    id: '1',
+    name: 'โรงพยาบาลศูนย์การแพทย์ มหาวิทยาลัยวลัยลักษณ์',
+    province: 'นครศรีธรรมราช',
+    address: '222 ต.ไทยบุรี อ.ท่าศาลา',
+    phone: '075-672-000',
+    operating_hours: '08:30 - 16:30 น.',
+    status: 'active'
+  },
+  {
+    id: '2',
+    name: 'โรงพยาบาลท่าศาลา',
+    province: 'นครศรีธรรมราช',
+    address: 'ท่าศาลา, นครศรีธรรมราช',
+    phone: '075-521-333',
+    operating_hours: 'เปิดบริการ 24 ชั่วโมง',
+    status: 'active'
+  }
+];
+
+// GET: สำหรับดึงข้อมูลโรงพยาบาลทั้งหมด
 export async function GET() {
+  return NextResponse.json(mockHospitals);
+}
+
+// POST: สำหรับเพิ่มโรงพยาบาลใหม่
+export async function POST(request: Request) {
   try {
-    // ตัวอย่างการดึงข้อมูลจากตาราง hospitals ใน Supabase
-    // const { data, error } = await supabase.from('hospitals').select('*').single();
-    
-    // if (error) throw error;
-
-    // ข้อมูลจำลองที่โครงสร้างตรงกับ Schema จริงของตาราง hospitals
-    const hospitalData = {
-      id: 'HSP-BKK-002',
-      name: 'โรงพยาบาลจุฬาลงกรณ์ สภากาชาดไทย',
-      province: 'กรุงเทพมหานคร',
-      address: 'เลขที่ 1873 ถนนพระรามที่ 4 แขวงปทุมวัน เขตปทุมวัน กรุงเทพมหานคร 10330 อาคารภูมิสิริมังคลานุสรณ์ ชั้น 2 ฝ่ายเวชศาสตร์ชันสูตร',
-      phone: '02-256-4300 ต่อ 3456',
-      coordinator: 'คุณวรรณา ใจมั่น',
-      coordinator_role: 'หัวหน้าห้องรับบริจาค',
-      // อัปเดตโครงสร้างเวลาทำการให้รองรับข้อมูลแบบละเอียด
-      operating_hours: {
-        weekday: '08:30–16:30 น.',
-        weekend: '08:30–15:30 น.',
-        note: 'จันทร์ – ศุกร์ และ เสาร์ – อาทิตย์'
-      },
-      status: 'เปิดรับบริจาคปกติ'
+    const body = await request.json();
+    const newHospital = {
+      id: Date.now().toString(),
+      name: body.name,
+      province: body.province,
+      address: body.address || '',
+      phone: body.phone,
+      operating_hours: body.operating_hours || '08:30 - 16:30 น.',
+      status: body.status || 'active'
     };
-
-    return NextResponse.json({ success: true, data: hospitalData });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    
+    mockHospitals.push(newHospital);
+    return NextResponse.json({ success: true, data: newHospital }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to create hospital' }, { status: 500 });
   }
 }
