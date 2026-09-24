@@ -21,7 +21,7 @@ export default function RequestBrowser({
   });
 
   const filtered = requests.filter((req) => {
-    const isNegative = req.rh_factor === "Negative" || req.rh_factor === "-";
+    const isNegative = req.rh_factor === "Negative" || req.rh_factor === "-"; // Strict
     const sign = isNegative ? "-" : "+";
     const fullType = `${req.blood_type}${sign}`;
 
