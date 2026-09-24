@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import CloseRequestButton from './CloseRequestButton';
+import DeleteRequestButton from './DeleteRequestButton';
 import {
   type RequestView, Badge, Heading, Icon, InfoTable, SectionTitle, basePath, buttonClass,
   cardClass, formatDate, formatDateTime, primaryButtonClass, shortRequestId,
@@ -16,6 +17,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
         <Link className={buttonClass} href={basePath}><Icon name="arrow" />กลับ</Link>
         {editable ? <Link className={buttonClass} href={`${basePath}/${request.id}/edit`}>แก้ไขคำร้อง</Link> : <button className={buttonClass} disabled>แก้ไขคำร้อง</button>}
         {editable ? <CloseRequestButton requestId={request.id} /> : <button className={primaryButtonClass} disabled>ปิดคำร้องแล้ว</button>}
+        <DeleteRequestButton requestId={request.id} disabled={request.responseCount > 0} />
       </div>
     </Heading>
 
