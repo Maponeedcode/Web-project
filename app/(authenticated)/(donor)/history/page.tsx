@@ -119,6 +119,8 @@ export default function HistoryPage() {
   const [profile, setProfile] = useState<DonorProfile | null>(null);
   const [records, setRecords] = useState<DonationRecordView[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [cancellationError, setCancellationError] = useState("");
+  const [cancellingRecordId, setCancellingRecordId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -154,6 +156,34 @@ export default function HistoryPage() {
 
     loadHistory();
   }, [router]);
+
+  const handleCancelRecord = async (recordId: string) => {
+    if (cancellingRecordId) return;
+    if (!window.confirm("ยืนยันยกเลิกการตอบรับรายการนี้ใช่หรือไม่")) return;
+
+    setCancellingRecordId(recordId);
+    setCancellationError("");
+    try {
+      const response = await fetch(`/api/donor/donations/${recordId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "ไม่สามารถยกเลิกรายการได้");
+
+      setRecords((currentRecords) =>
+        currentRecords.map((record) =>
+          record.record_id === recordId ? { ...record, status: "CANCELLED" } : record,
+        ),
+      );
+    } catch (error) {
+      console.error("Unable to cancel donation history record:", error);
+      setCancellationError(error instanceof Error ? error.message : "ไม่สามารถยกเลิกรายการได้");
+    } finally {
+      setCancellingRecordId(null);
+    }
+  };
 
   const summary = useMemo(() => {
     const completedRecords = records.filter((record) => isCompleted(record.status));
@@ -220,6 +250,11 @@ export default function HistoryPage() {
                     <p className="text-xs text-slate-500">{records.length.toLocaleString("th-TH")} รายการ</p>
                   </div>
                 </div>
+                {cancellationError && (
+                  <p className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
+                    {cancellationError}
+                  </p>
+                )}
 
                 {records.length === 0 ? (
                   <div className="p-10 text-center">
@@ -238,7 +273,7 @@ export default function HistoryPage() {
                           <th className="px-6 py-4 font-semibold">สถานที่ / โรงพยาบาล</th>
                           <th className="px-6 py-4 font-semibold">ประเภทคำร้อง</th>
                           <th className="px-6 py-4 text-center font-semibold">ปริมาณ (มล.)</th>
-                          <th className="px-6 py-4 text-right font-semibold">สถานะ</th>
+                          <th className="px-6 py-4 text-right font-semibold">สถานะ / การจัดการ</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -261,10 +296,25 @@ export default function HistoryPage() {
                               </td>
                               <td className="px-6 py-4 text-center font-extrabold text-[#0e3b6c]">{record.volume_ml?.toLocaleString("th-TH") || "-"}</td>
                               <td className="px-6 py-4 text-right">
-                                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${status.className}`}>
-                                  <i className={`fa-solid ${status.icon}`} />
-                                  {status.label}
-                                </span>
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${status.className}`}>
+                                    <i className={`fa-solid ${status.icon}`} />
+                                    {status.label}
+                                  </span>
+                                  {record.request_id &&
+                                    ["ACCEPTED", "PENDING"].includes(record.status.toUpperCase()) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCancelRecord(record.record_id)}
+                                        disabled={cancellingRecordId === record.record_id}
+                                        className="text-xs font-bold text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        {cancellingRecordId === record.record_id
+                                          ? "กำลังยกเลิก..."
+                                          : "ยกเลิกการตอบรับ"}
+                                      </button>
+                                    )}
+                                </div>
                               </td>
                             </tr>
                           );

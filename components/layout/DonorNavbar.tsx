@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import {
   faBell,
@@ -177,9 +177,13 @@ export default function DonorNavbar({
             "
           >
             <div className="mx-auto w-full max-w-2xl">
-              <SearchBar
-                placeholder="Search blood requests..."
-              />
+              <Suspense
+                fallback={<div aria-hidden="true" className="h-10 w-full rounded-xl bg-slate-50" />}
+              >
+                <SearchBar
+                  placeholder="Search blood requests..."
+                />
+              </Suspense>
             </div>
           </div>
 
@@ -435,9 +439,13 @@ export default function DonorNavbar({
           md:hidden
         "
       >
-        <SearchBar
-          placeholder="Search blood requests..."
-        />
+        <Suspense
+          fallback={<div aria-hidden="true" className="h-10 w-full rounded-xl bg-slate-50" />}
+        >
+          <SearchBar
+            placeholder="Search blood requests..."
+          />
+        </Suspense>
       </div>
     </>
   );
