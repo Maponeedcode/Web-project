@@ -6,7 +6,6 @@ export interface AuthUser {
   user_id: string;
   user_name: string;
   full_name: string;
-  phone: string;
   role: 'donor' | 'hospital_admin' | 'system_admin';
   hospital_id?: string | null;
 }
@@ -24,7 +23,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         user_id,
         user_name,
         full_name,
-        phone,
         role,
         hospital_id
       )
