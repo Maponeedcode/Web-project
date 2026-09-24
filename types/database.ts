@@ -5,6 +5,7 @@ export interface Hospital        {
   province: string;
   contact_phone: string;
   contact_person: string | null;
+  operating_hours?: string | null;
   created_at: string;
 }
 
