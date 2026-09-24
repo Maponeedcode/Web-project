@@ -45,6 +45,11 @@ type BloodRequestQueryRow = Omit<
   donation_records?: BloodRequest["donation_records"] | null;
 };
 
+type ActiveRequest = BloodRequest & {
+  donation_record_id: string;
+  donation_status: string;
+};
+
 const normalizeRh = (rh?: string | null) => {
   const value = rh?.trim().toUpperCase();
 
@@ -110,8 +115,10 @@ export default function DashboardPage() {
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [profile, setProfile] = useState<DonorProfile | null>(null);
   const [matchedRequests, setMatchedRequests] = useState<BloodRequest[]>([]);
-  const [activeRequest, setActiveRequest] = useState<BloodRequest | null>(null);
+  const [activeRequest, setActiveRequest] = useState<ActiveRequest | null>(null);
   const [isUpdatingReadiness, setIsUpdatingReadiness] = useState(false);
+  const [isCancellingMission, setIsCancellingMission] = useState(false);
+  const [missionError, setMissionError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -139,7 +146,7 @@ export default function DashboardPage() {
         );
         setActiveRequest(
           data.activeRequest
-            ? toBloodRequest(data.activeRequest as BloodRequestQueryRow)
+            ? (toBloodRequest(data.activeRequest as BloodRequestQueryRow) as ActiveRequest)
             : null,
         );
       } catch (error) {
@@ -154,6 +161,31 @@ export default function DashboardPage() {
 
   const bloodGroup = formatBloodGroup(profile);
   const recoveryStatus = getRecoveryStatus(profile?.last_donate_date);
+
+  const handleCancelMission = async () => {
+    if (!activeRequest || isCancellingMission) return;
+    if (!window.confirm("ยืนยันยกเลิกการตอบรับภารกิจนี้ใช่หรือไม่")) return;
+
+    setIsCancellingMission(true);
+    setMissionError("");
+
+    try {
+      const response = await fetch(
+        `/api/donor/donations/${activeRequest.donation_record_id}`,
+        { method: "DELETE", credentials: "include" },
+      );
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "ไม่สามารถยกเลิกภารกิจได้");
+
+      setActiveRequest(null);
+    } catch (error) {
+      console.error("Unable to cancel donation:", error);
+      setMissionError(error instanceof Error ? error.message : "ไม่สามารถยกเลิกภารกิจได้");
+    } finally {
+      setIsCancellingMission(false);
+    }
+  };
 
   const handleReadinessToggle = async () => {
     if (!profile || recoveryStatus.isCoolingDown || isUpdatingReadiness) return;
@@ -298,6 +330,18 @@ export default function DashboardPage() {
                             </p>
                           </div>
                         </div>
+                        {missionError && (
+                          <p className="mt-3 text-sm text-red-600">{missionError}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleCancelMission}
+                          disabled={isCancellingMission}
+                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <i className="fa-solid fa-xmark" />
+                          {isCancellingMission ? "กำลังยกเลิก..." : "ยกเลิกการตอบรับ"}
+                        </button>
                       </div>
                     ) : (
                       <div className="p-8 text-center sm:p-10">

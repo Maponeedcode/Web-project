@@ -167,16 +167,18 @@ export async function POST(request: Request) {
     }
 
     // =========================================
-    // 7. ตรวจสอบว่าผู้บริจาคเคยตอบรับหรือยัง
+    // 7. ตรวจสอบว่าผู้บริจาคมีการตอบรับที่ยังใช้งานอยู่หรือไม่
+    // รายการที่ยกเลิกแล้วต้องไม่ขัดขวางการตอบรับใหม่
     // =========================================
     const {
       data: existingDonation,
       error: existingDonationError,
     } = await supabaseAdmin
       .from("donation_records")
-      .select("record_id")
+      .select("record_id, status")
       .eq("request_id", requestId)
       .eq("donor_id", userId)
+      .in("status", ["ACCEPTED", "PENDING"])
       .maybeSingle();
 
     if (existingDonationError) {
