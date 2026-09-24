@@ -72,7 +72,9 @@ const formatDate = (date: string) =>
     year: "numeric",
   });
 
-const getRecoveryStatus = (lastDonationDate?: string | null): RecoveryStatus => {
+const getRecoveryStatus = (
+  lastDonationDate?: string | null,
+): RecoveryStatus => {
   if (!lastDonationDate) {
     return {
       isCoolingDown: false,
@@ -105,7 +107,7 @@ const toBloodRequest = (request: BloodRequestQueryRow): BloodRequest => ({
   ...request,
   hospitals: Array.isArray(request.hospitals)
     ? request.hospitals[0]
-    : request.hospitals ?? undefined,
+    : (request.hospitals ?? undefined),
   donation_records: request.donation_records ?? undefined,
 });
 
@@ -115,7 +117,9 @@ export default function DashboardPage() {
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [profile, setProfile] = useState<DonorProfile | null>(null);
   const [matchedRequests, setMatchedRequests] = useState<BloodRequest[]>([]);
-  const [activeRequest, setActiveRequest] = useState<ActiveRequest | null>(null);
+  const [activeRequest, setActiveRequest] = useState<ActiveRequest | null>(
+    null,
+  );
   const [isUpdatingReadiness, setIsUpdatingReadiness] = useState(false);
   const [isCancellingMission, setIsCancellingMission] = useState(false);
   const [missionError, setMissionError] = useState("");
@@ -142,11 +146,15 @@ export default function DashboardPage() {
         setUser(data.user as DashboardUser);
         setProfile(data.profile as DonorProfile);
         setMatchedRequests(
-          ((data.matchedRequests ?? []) as BloodRequestQueryRow[]).map(toBloodRequest),
+          ((data.matchedRequests ?? []) as BloodRequestQueryRow[]).map(
+            toBloodRequest,
+          ),
         );
         setActiveRequest(
           data.activeRequest
-            ? (toBloodRequest(data.activeRequest as BloodRequestQueryRow) as ActiveRequest)
+            ? (toBloodRequest(
+                data.activeRequest as BloodRequestQueryRow,
+              ) as ActiveRequest)
             : null,
         );
       } catch (error) {
@@ -176,12 +184,15 @@ export default function DashboardPage() {
       );
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || "ไม่สามารถยกเลิกภารกิจได้");
+      if (!response.ok)
+        throw new Error(data.error || "ไม่สามารถยกเลิกภารกิจได้");
 
       setActiveRequest(null);
     } catch (error) {
       console.error("Unable to cancel donation:", error);
-      setMissionError(error instanceof Error ? error.message : "ไม่สามารถยกเลิกภารกิจได้");
+      setMissionError(
+        error instanceof Error ? error.message : "ไม่สามารถยกเลิกภารกิจได้",
+      );
     } finally {
       setIsCancellingMission(false);
     }
@@ -202,7 +213,8 @@ export default function DashboardPage() {
       });
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || "ไม่สามารถอัปเดตสถานะได้");
+      if (!response.ok)
+        throw new Error(data.error || "ไม่สามารถอัปเดตสถานะได้");
 
       setProfile(data.profile as DonorProfile);
     } catch (error) {
@@ -236,7 +248,9 @@ export default function DashboardPage() {
                   />
 
                   <div>
-                    <p className="text-sm font-medium text-slate-500">สวัสดี,</p>
+                    <p className="text-sm font-medium text-slate-500">
+                      สวัสดี,
+                    </p>
                     <h1 className="text-xl font-extrabold text-[#0e3b6c] sm:text-2xl">
                       {user?.full_name || "ผู้บริจาค"}
                     </h1>
@@ -251,7 +265,9 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={handleReadinessToggle}
-                    disabled={recoveryStatus.isCoolingDown || isUpdatingReadiness}
+                    disabled={
+                      recoveryStatus.isCoolingDown || isUpdatingReadiness
+                    }
                     className={`rounded-2xl border px-4 py-3 ${
                       profile?.is_ready && !recoveryStatus.isCoolingDown
                         ? "border-emerald-200 bg-emerald-50"
@@ -269,8 +285,8 @@ export default function DashboardPage() {
                       {recoveryStatus.isCoolingDown
                         ? `พักฟื้นอีก ${recoveryStatus.daysRemaining} วัน`
                         : profile?.is_ready
-                        ? "พร้อมรับแจ้งเตือนด่วน"
-                        : "ปิดรับแจ้งเตือนด่วน"}
+                          ? "พร้อมรับแจ้งเตือนด่วน"
+                          : "ปิดรับแจ้งเตือนด่วน"}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
                       {recoveryStatus.isCoolingDown
@@ -315,14 +331,18 @@ export default function DashboardPage() {
                         </p>
                         <div className="mt-5 grid gap-3 rounded-2xl border border-blue-100 bg-white p-4 text-sm sm:grid-cols-2">
                           <div>
-                            <p className="text-xs font-bold text-slate-400">กรุ๊ปเลือดที่ต้องการ</p>
+                            <p className="text-xs font-bold text-slate-400">
+                              กรุ๊ปเลือดที่ต้องการ
+                            </p>
                             <p className="mt-1 font-bold text-[#0e3b6c]">
                               {activeRequest.blood_type}
                               {normalizeRh(activeRequest.rh_factor)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-400">ต้องการภายใน</p>
+                            <p className="text-xs font-bold text-slate-400">
+                              ต้องการภายใน
+                            </p>
                             <p className="mt-1 font-bold text-slate-700">
                               {activeRequest.target_date
                                 ? formatDate(activeRequest.target_date)
@@ -331,7 +351,9 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         {missionError && (
-                          <p className="mt-3 text-sm text-red-600">{missionError}</p>
+                          <p className="mt-3 text-sm text-red-600">
+                            {missionError}
+                          </p>
                         )}
                         <button
                           type="button"
@@ -340,7 +362,9 @@ export default function DashboardPage() {
                           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <i className="fa-solid fa-xmark" />
-                          {isCancellingMission ? "กำลังยกเลิก..." : "ยกเลิกการตอบรับ"}
+                          {isCancellingMission
+                            ? "กำลังยกเลิก..."
+                            : "ยกเลิกการตอบรับ"}
                         </button>
                       </div>
                     ) : (
@@ -348,9 +372,12 @@ export default function DashboardPage() {
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#65a1f2] shadow-sm">
                           <i className="fa-solid fa-hand-holding-heart" />
                         </div>
-                        <h3 className="mt-4 font-bold text-slate-800">ยังไม่มีภารกิจที่ตอบรับอยู่</h3>
+                        <h3 className="mt-4 font-bold text-slate-800">
+                          ยังไม่มีภารกิจที่ตอบรับอยู่
+                        </h3>
                         <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
-                          เมื่อคุณตอบรับเคสขอเลือด รายละเอียดภารกิจจะแสดงในส่วนนี้
+                          เมื่อคุณตอบรับเคสขอเลือด
+                          รายละเอียดภารกิจจะแสดงในส่วนนี้
                         </p>
                       </div>
                     )}
@@ -366,7 +393,10 @@ export default function DashboardPage() {
                           เคสกรุ๊ปเลือด {bloodGroup} ในจังหวัดของคุณ
                         </p>
                       </div>
-                      <Link href="/requests" className="text-sm font-bold text-[#126fd1] hover:underline">
+                      <Link
+                        href="/requests"
+                        className="text-sm font-bold text-[#126fd1] hover:underline"
+                      >
                         ดูทั้งหมด
                       </Link>
                     </div>
@@ -385,13 +415,17 @@ export default function DashboardPage() {
                               />
                               <div>
                                 <div className="mb-1 flex flex-wrap items-center gap-2">
-                                  <UrgencyBadge urgency={request.urgency_level} className="px-2 py-0.5 text-[10px]" />
+                                  <UrgencyBadge
+                                    urgency={request.urgency_level}
+                                    className="px-2 py-0.5 text-[10px]"
+                                  />
                                   <h3 className="font-bold text-slate-800">
                                     {request.hospitals?.name || "โรงพยาบาล"}
                                   </h3>
                                 </div>
                                 <p className="text-sm text-slate-500">
-                                  {request.purpose || "ไม่ระบุวัตถุประสงค์"} · ต้องการ {request.units_needed} ยูนิต
+                                  {request.purpose || "ไม่ระบุวัตถุประสงค์"} ·
+                                  ต้องการ {request.units_needed} ยูนิต
                                 </p>
                               </div>
                             </div>
@@ -413,8 +447,12 @@ export default function DashboardPage() {
                 </div>
 
                 <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-                  <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${recoveryStatus.isCoolingDown ? "bg-amber-50 text-amber-500" : profile?.is_ready ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-                    <i className={`fa-solid ${recoveryStatus.isCoolingDown ? "fa-hourglass-half" : profile?.is_ready ? "fa-circle-check" : "fa-circle-pause"} text-2xl`} />
+                  <div
+                    className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${recoveryStatus.isCoolingDown ? "bg-amber-50 text-amber-500" : profile?.is_ready ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    <i
+                      className={`fa-solid ${recoveryStatus.isCoolingDown ? "fa-hourglass-half" : profile?.is_ready ? "fa-circle-check" : "fa-circle-pause"} text-2xl`}
+                    />
                   </div>
                   <h2 className="mt-4 text-lg font-extrabold text-slate-800">
                     {recoveryStatus.isCoolingDown
@@ -427,8 +465,8 @@ export default function DashboardPage() {
                     {recoveryStatus.isCoolingDown
                       ? `เพื่อสุขภาพที่ดีของคุณ กรุณาเว้นระยะ 90 วัน (พร้อมอีกครั้ง ${recoveryStatus.nextDonationDate ? formatDate(recoveryStatus.nextDonationDate.toISOString()) : "-"})`
                       : profile?.is_ready
-                      ? "คุณจะเห็นเคสเปิดที่ตรงกับกรุ๊ปเลือดและจังหวัดของคุณ"
-                      : "เปิดการรับแจ้งเตือนจากหน้าโปรไฟล์ เมื่อคุณพร้อมรับเคสใหม่"}
+                        ? "คุณจะเห็นเคสเปิดที่ตรงกับกรุ๊ปเลือดและจังหวัดของคุณ"
+                        : "เปิดการรับแจ้งเตือนจากหน้าโปรไฟล์ เมื่อคุณพร้อมรับเคสใหม่"}
                   </p>
                   {recoveryStatus.isCoolingDown && (
                     <div className="mt-5 text-left">
@@ -445,15 +483,21 @@ export default function DashboardPage() {
                     </div>
                   )}
                   <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-left">
-                    <p className="text-xs font-bold text-slate-400">ข้อมูลสำหรับการจับคู่</p>
+                    <p className="text-xs font-bold text-slate-400">
+                      ข้อมูลสำหรับการจับคู่
+                    </p>
                     <dl className="mt-3 space-y-2 text-sm">
                       <div className="flex justify-between gap-3">
                         <dt className="text-slate-500">กรุ๊ปเลือด</dt>
-                        <dd className="font-bold text-[#0e3b6c]">{bloodGroup}</dd>
+                        <dd className="font-bold text-[#0e3b6c]">
+                          {bloodGroup}
+                        </dd>
                       </div>
                       <div className="flex justify-between gap-3">
                         <dt className="text-slate-500">จังหวัด</dt>
-                        <dd className="text-right font-bold text-slate-700">{profile?.province || "-"}</dd>
+                        <dd className="text-right font-bold text-slate-700">
+                          {profile?.province || "-"}
+                        </dd>
                       </div>
                     </dl>
                   </div>
@@ -462,7 +506,9 @@ export default function DashboardPage() {
             </>
           )}
 
-          <Footer />
+          <div className="mt-10 sm:mt-12">
+            <Footer />
+          </div>
         </div>
       </main>
     </div>

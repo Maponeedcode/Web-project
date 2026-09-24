@@ -1,7 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import BloodBadge from "@/components/BloodBadge";
 import DonorNavbar from "@/components/layout/DonorNavbar";
@@ -48,8 +50,11 @@ const normalizeRh = (rh?: string | null) => {
 
 const formatDate = (date?: string | null) => {
   if (!date) return "-";
+  const cleanStr = date.includes("T") ? date : `${date.slice(0, 10)}T00:00:00`;
+  const parsed = new Date(cleanStr);
+  if (isNaN(parsed.getTime())) return "-";
 
-  return new Date(`${date.slice(0, 10)}T00:00:00`).toLocaleDateString("th-TH", {
+  return parsed.toLocaleDateString("th-TH", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -114,6 +119,9 @@ const toDonationRecordView = (record: DonationRecordQueryRow): DonationRecordVie
 
 export default function HistoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchKeyword = searchParams.get("search")?.trim().toLowerCase() || "";
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<HistoryUser | null>(null);
   const [profile, setProfile] = useState<DonorProfile | null>(null);
@@ -185,6 +193,28 @@ export default function HistoryPage() {
     }
   };
 
+  // กรองรายการตามคำค้นหาใน SearchBar
+  const filteredRecords = useMemo(() => {
+    if (!searchKeyword) return records;
+
+    return records.filter((record) => {
+      const hospitalName = record.request?.hospitals?.name?.toLowerCase() || "";
+      const province = record.request?.hospitals?.province?.toLowerCase() || "";
+      const notes = record.notes?.toLowerCase() || "";
+      const dateStr = formatDate(record.donation_date);
+      const statusLabel = getStatusPresentation(record.status).label.toLowerCase();
+
+      return (
+        hospitalName.includes(searchKeyword) ||
+        province.includes(searchKeyword) ||
+        notes.includes(searchKeyword) ||
+        dateStr.includes(searchKeyword) ||
+        statusLabel.includes(searchKeyword)
+      );
+    });
+  }, [records, searchKeyword]);
+
+  // สรุปสถิติภาพรวมทั้งหมด (คำนวณจากทุกเรคคอร์ด)
   const summary = useMemo(() => {
     const completedRecords = records.filter((record) => isCompleted(record.status));
     const totalVolume = completedRecords.reduce(
@@ -241,28 +271,45 @@ export default function HistoryPage() {
               </section>
 
               <section id="donation-records" className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:px-6">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#126fd1] shadow-sm">
-                    <i className="fa-solid fa-list" />
-                  </span>
-                  <div>
-                    <h2 className="font-extrabold text-[#0e3b6c]">บันทึกกิจกรรมย้อนหลัง</h2>
-                    <p className="text-xs text-slate-500">{records.length.toLocaleString("th-TH")} รายการ</p>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#126fd1] shadow-sm">
+                      <i className="fa-solid fa-list" />
+                    </span>
+                    <div>
+                      <h2 className="font-extrabold text-[#0e3b6c]">บันทึกกิจกรรมย้อนหลัง</h2>
+                      <p className="text-xs text-slate-500">
+                        {searchKeyword
+                          ? `พบ ${filteredRecords.length.toLocaleString("th-TH")} รายการ (จากทั้งหมด ${records.length} รายการ)`
+                          : `${records.length.toLocaleString("th-TH")} รายการ`}
+                      </p>
+                    </div>
                   </div>
+
+                  {searchKeyword && (
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#126fd1]">
+                      ค้นหา: &quot;{searchKeyword}&quot;
+                    </span>
+                  )}
                 </div>
+
                 {cancellationError && (
                   <p className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
                     {cancellationError}
                   </p>
                 )}
 
-                {records.length === 0 ? (
+                {filteredRecords.length === 0 ? (
                   <div className="p-10 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#126fd1]">
                       <i className="fa-solid fa-heart-pulse" />
                     </div>
-                    <h3 className="mt-4 font-bold text-slate-800">ยังไม่มีประวัติการบริจาค</h3>
-                    <p className="mt-1 text-sm text-slate-500">เมื่อมีการบันทึกรายการ ข้อมูลจะแสดงในหน้านี้</p>
+                    <h3 className="mt-4 font-bold text-slate-800">
+                      {searchKeyword ? "ไม่พบประวัติการบริจาคที่ตรงกับคำค้นหา" : "ยังไม่มีประวัติการบริจาค"}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {searchKeyword ? "ลองตรวจสอบตัวสะกดหรือค้นหาด้วยคำอื่น" : "เมื่อมีการบันทึกรายการ ข้อมูลจะแสดงในหน้านี้"}
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -277,7 +324,7 @@ export default function HistoryPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {records.map((record) => {
+                        {filteredRecords.map((record) => {
                           const status = getStatusPresentation(record.status);
                           const hospital = record.request?.hospitals;
 
