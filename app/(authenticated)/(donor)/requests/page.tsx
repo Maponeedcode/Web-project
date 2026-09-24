@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DonorNavbar from "@/components/layout/DonorNavbar";
@@ -213,7 +213,15 @@ export default function RequestsPage() {
                 </p>
               </div>
             ) : (
-              <RequestFeed requests={requests} />
+              <Suspense
+                fallback={
+                  <div className="py-12 text-center text-sm text-slate-500">
+                    กำลังโหลดรายการคำขอรับบริจาคโลหิต...
+                  </div>
+                }
+              >
+                <RequestFeed requests={requests} />
+              </Suspense>
             )}
 
             {/* Footer */}
