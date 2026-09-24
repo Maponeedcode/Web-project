@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import BloodBadge from "@/components/BloodBadge";
@@ -117,7 +117,7 @@ const toDonationRecordView = (record: DonationRecordQueryRow): DonationRecordVie
   };
 };
 
-export default function HistoryPage() {
+function HistoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchKeyword = searchParams.get("search")?.trim().toLowerCase() || "";
@@ -193,7 +193,6 @@ export default function HistoryPage() {
     }
   };
 
-  // กรองรายการตามคำค้นหาใน SearchBar
   const filteredRecords = useMemo(() => {
     if (!searchKeyword) return records;
 
@@ -214,7 +213,6 @@ export default function HistoryPage() {
     });
   }, [records, searchKeyword]);
 
-  // สรุปสถิติภาพรวมทั้งหมด (คำนวณจากทุกเรคคอร์ด)
   const summary = useMemo(() => {
     const completedRecords = records.filter((record) => isCompleted(record.status));
     const totalVolume = completedRecords.reduce(
@@ -378,6 +376,14 @@ export default function HistoryPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-10 text-center text-sm text-slate-500">กำลังเตรียมข้อมูล...</div>}>
+      <HistoryContent />
+    </Suspense>
   );
 }
 
