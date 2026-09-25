@@ -56,6 +56,23 @@ const formatPhoneNumber = (value: string) => {
   return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6, 10)}`;
 };
 
+// Asian BMI cut-offs used by the Thai Ministry of Public Health.
+const BMI_LEVELS = [
+  { max: 18.5, label: "น้ำหนักน้อย", className: "text-amber-600" },
+  { max: 23, label: "ปกติ", className: "text-emerald-600" },
+  { max: 25, label: "ท้วม", className: "text-amber-600" },
+  { max: 30, label: "อ้วน", className: "text-orange-600" },
+  { max: Infinity, label: "อ้วนมาก", className: "text-red-600" },
+];
+
+const calculateBmi = (weight: string, height: string) => {
+  const kg = Number(weight);
+  const cm = Number(height);
+  if (!kg || !cm || cm < 100 || cm > 250) return null;
+  const value = kg / (cm / 100) ** 2;
+  return { value, level: BMI_LEVELS.find((level) => value < level.max)! };
+};
+
 const splitNotes = (notes: string) =>
   notes
     .split(",")
@@ -135,6 +152,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   const today = bangkokToday();
+  const bmi = calculateBmi(weight, height);
   const eligibility = evaluateDonorEligibility({
     weight: weight ? Number(weight) : null,
     date_of_birth: dateOfBirth || null,
@@ -469,7 +487,15 @@ export default function ProfilePage() {
                       placeholder="เช่น 170"
                       className={INPUT_CLASS}
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">ใช้สำหรับคำนวณค่าดัชนีมวลกาย (BMI)</p>
+                    {bmi ? (
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        ดัชนีมวลกาย (BMI){" "}
+                        <span className="font-bold text-[#0e3b6c]">{bmi.value.toFixed(1)}</span>{" "}
+                        <span className={`font-semibold ${bmi.level.className}`}>· {bmi.level.label}</span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 mt-1">ใช้สำหรับคำนวณค่าดัชนีมวลกาย (BMI)</p>
+                    )}
                   </div>
                 </div>
               </Section>
