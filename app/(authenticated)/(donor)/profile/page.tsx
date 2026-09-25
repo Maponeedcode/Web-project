@@ -68,11 +68,13 @@ function Section({ icon, title, children }: { icon: string; title: string; child
 }
 
 function Toggle({
+  label,
   checked,
   onChange,
   activeClass,
   disabled = false,
 }: {
+  label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   activeClass: string;
@@ -82,6 +84,8 @@ function Toggle({
     <label className={`relative inline-flex items-center shrink-0 ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
       <input
         type="checkbox"
+        role="switch"
+        aria-label={label}
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
@@ -324,10 +328,11 @@ export default function ProfilePage() {
               <Section icon="fa-solid fa-phone" title="ข้อมูลติดต่อ">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-phone" className={LABEL_CLASS}>
                       <i className="fa-solid fa-phone text-slate-700 mr-3"></i>เบอร์โทรศัพท์ที่ติดต่อได้ <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input
+                      id="profile-phone"
                       type="tel"
                       required
                       maxLength={10}
@@ -338,10 +343,10 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-province" className={LABEL_CLASS}>
                       <i className="fa-solid fa-location-crosshairs text-slate-700 mr-3"></i>จังหวัดที่พำนักปัจจุบัน <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <select required value={province} onChange={(e) => setProvince(e.target.value)} className={INPUT_CLASS}>
+                    <select id="profile-province" required value={province} onChange={(e) => setProvince(e.target.value)} className={INPUT_CLASS}>
                       <option value="">เลือกจังหวัด</option>
                       {THAI_PROVINCES.map((p) => (
                         <option key={p} value={p}>{p}</option>
@@ -354,10 +359,10 @@ export default function ProfilePage() {
               <Section icon="fa-solid fa-droplet" title="ข้อมูลสุขภาพพื้นฐาน">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-blood-type" className={LABEL_CLASS}>
                       หมู่โลหิตหลัก (ABO) <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <select required value={bloodType} onChange={(e) => setBloodType(e.target.value)} className={INPUT_CLASS}>
+                    <select id="profile-blood-type" required value={bloodType} onChange={(e) => setBloodType(e.target.value)} className={INPUT_CLASS}>
                       <option value="">เลือกหมู่โลหิตหลัก</option>
                       {["A", "B", "AB", "O"].map((g) => (
                         <option key={g} value={g}>{g}</option>
@@ -365,20 +370,21 @@ export default function ProfilePage() {
                     </select>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-rh" className={LABEL_CLASS}>
                       หมู่โลหิตย่อย (Rh Factor) <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <select required value={rh} onChange={(e) => setRh(e.target.value)} className={INPUT_CLASS}>
+                    <select id="profile-rh" required value={rh} onChange={(e) => setRh(e.target.value)} className={INPUT_CLASS}>
                       <option value="">เลือกหมู่โลหิตย่อย</option>
                       <option value="+">Rh+ (Positive)</option>
                       <option value="-">Rh- (Negative)</option>
                     </select>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-dob" className={LABEL_CLASS}>
                       <i className="fa-regular fa-calendar text-slate-700 mr-3"></i>วัน/เดือน/ปีเกิด <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input
+                      id="profile-dob"
                       type="date"
                       required
                       max={today}
@@ -388,10 +394,10 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <p id="profile-gender-label" className={LABEL_CLASS}>
                       <i className="fa-solid fa-venus-mars text-slate-700 mr-3"></i>เพศกำเนิด <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="flex items-center gap-6 h-[46px]">
+                    </p>
+                    <div role="radiogroup" aria-labelledby="profile-gender-label" className="flex items-center gap-6 h-[46px]">
                       {["ชาย", "หญิง"].map((option) => (
                         <label key={option} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
                           <input
@@ -407,10 +413,11 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-weight" className={LABEL_CLASS}>
                       <i className="fa-solid fa-weight-scale text-slate-700 mr-3"></i>น้ำหนัก (กก.) <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input
+                      id="profile-weight"
                       type="number"
                       required
                       min={45}
@@ -424,10 +431,11 @@ export default function ProfilePage() {
                     <p className="text-[11px] text-slate-400 mt-1">ต้องไม่ต่ำกว่า 45 กิโลกรัม</p>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>
+                    <label htmlFor="profile-height" className={LABEL_CLASS}>
                       <i className="fa-solid fa-ruler-vertical text-slate-700 mr-3"></i>ส่วนสูง (ซม.)
                     </label>
                     <input
+                      id="profile-height"
                       type="number"
                       min={100}
                       max={250}
@@ -461,6 +469,7 @@ export default function ProfilePage() {
                           key={condition}
                           type="button"
                           onClick={() => toggleCondition(condition)}
+                          aria-pressed={isSelected}
                           className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border-2 transition ${
                             isSelected
                               ? "bg-blue-600 border-blue-600 text-white"
@@ -474,9 +483,12 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <p className="text-xs sm:text-sm font-medium text-[#0e3b6c] mb-1.5">ระบุโรคประจำตัว / ยาที่ต้องรับประทานต่อเนื่อง</p>
+                <label htmlFor="profile-medical-notes" className="block text-xs sm:text-sm font-medium text-[#0e3b6c] mb-1.5">
+                  ระบุโรคประจำตัว / ยาที่ต้องรับประทานต่อเนื่อง
+                </label>
                 <div className="relative">
                   <textarea
+                    id="profile-medical-notes"
                     value={medicalNotes}
                     onChange={(e) => setMedicalNotes(e.target.value.slice(0, MAX_NOTES_LENGTH))}
                     maxLength={MAX_NOTES_LENGTH}
@@ -555,6 +567,7 @@ export default function ProfilePage() {
                 <div className="grid sm:grid-cols-2 gap-4 sm:gap-0 sm:divide-x sm:divide-slate-200">
                   <div className="flex items-start gap-3 sm:pr-5">
                     <Toggle
+                      label="พร้อมบริจาค"
                       checked={isReady && !isCoolingDown}
                       onChange={setIsReady}
                       disabled={isCoolingDown}
@@ -570,7 +583,12 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3 sm:pl-5">
-                    <Toggle checked={urgentNotifications} onChange={setUrgentNotifications} activeClass="peer-checked:bg-blue-600" />
+                    <Toggle
+                      label="เปิดรับการแจ้งเตือนเคสด่วน"
+                      checked={urgentNotifications}
+                      onChange={setUrgentNotifications}
+                      activeClass="peer-checked:bg-blue-600"
+                    />
                     <div>
                       <p className="text-sm font-bold text-[#0e3b6c]">เปิดรับการแจ้งเตือนเคสด่วน</p>
                       <p className="text-xs text-slate-400">หากเปิด จะได้รับการแจ้งเตือนเคสด่วน</p>
@@ -607,6 +625,7 @@ export default function ProfilePage() {
                 <Section icon="fa-regular fa-calendar" title="วันที่บริจาคล่าสุด">
                   <input
                     type="date"
+                    aria-label="วันที่บริจาคล่าสุด"
                     max={today}
                     value={lastDonateDate}
                     onChange={(e) => setLastDonateDate(e.target.value)}
