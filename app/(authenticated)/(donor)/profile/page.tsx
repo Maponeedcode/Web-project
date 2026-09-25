@@ -49,6 +49,13 @@ const normalizeRh = (rh?: string | null) => {
   return "";
 };
 
+const formatPhoneNumber = (value: string) => {
+  const clean = value.replace(/\D/g, "");
+  if (clean.length <= 3) return clean;
+  if (clean.length <= 6) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+  return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6, 10)}`;
+};
+
 const splitNotes = (notes: string) =>
   notes
     .split(",")
@@ -151,7 +158,7 @@ export default function ProfilePage() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
 
-        setPhone(data.user?.phone ?? "");
+        setPhone(formatPhoneNumber(data.user?.phone ?? ""));
 
         const profile = data.profile as DonorProfileDetails | null;
         if (profile) {
@@ -335,12 +342,16 @@ export default function ProfilePage() {
                       id="profile-phone"
                       type="tel"
                       required
-                      maxLength={10}
+                      maxLength={12}
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="เช่น 0812345678"
+                      onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                      placeholder="เช่น 081-234-5678"
+                      aria-describedby="profile-phone-hint"
                       className={INPUT_CLASS}
                     />
+                    <p id="profile-phone-hint" className="text-[11px] text-slate-400 mt-1">
+                      * เลข 4 ตัวท้ายใช้ยืนยันตัวตนเวลารีเซ็ตรหัสผ่าน หากเปลี่ยนเบอร์ ให้ใช้เบอร์ใหม่ในครั้งถัดไป
+                    </p>
                   </div>
                   <div>
                     <label htmlFor="profile-province" className={LABEL_CLASS}>
