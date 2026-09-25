@@ -1,7 +1,7 @@
 import { formatDate, formatDateTime, statusLabels, type RequestView } from './blood-request';
 
 export default function RequestStatusStepper({ status, createdAt, date }: Pick<RequestView, 'status' | 'createdAt' | 'date'>) {
-  const steps: RequestView['status'][] = status === 'CANCELLED' || status === 'EXPIRED'
+  const steps: RequestView['status'][] = status === 'CANCELLED'
     ? ['OPEN', status]
     : ['OPEN', 'IN_PROGRESS', 'FULFILLED'];
   const currentIndex = steps.indexOf(status);
@@ -17,7 +17,7 @@ export default function RequestStatusStepper({ status, createdAt, date }: Pick<R
           <div className="min-w-0 pt-0.5">
             <span className={`text-sm ${current ? 'font-semibold text-[#0e3b6c]' : 'text-[#6480a1]'}`}>{statusLabels[step]}</span>
             {index === 0 && <small className="block text-xs text-[#6480a1]">สร้างเมื่อ {formatDateTime(createdAt)}</small>}
-            {current && status === 'EXPIRED' && <small className="block text-xs text-[#6480a1]">เลยวันที่ต้องการเลือด {formatDate(date)}</small>}
+            {current && <small className="block text-xs text-[#6480a1]">เลยวันที่ต้องการเลือด {formatDate(date)}</small>}
             {current && index !== 0 && <small className="block text-xs text-[#147ee9]">สถานะปัจจุบัน</small>}
           </div>
         </li>;

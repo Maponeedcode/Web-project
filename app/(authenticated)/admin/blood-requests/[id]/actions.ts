@@ -53,9 +53,10 @@ export async function updateBloodRequest(
   }
   if (!data) return { error: 'คำร้องถูกเปลี่ยนสถานะแล้ว กรุณากลับไปตรวจสอบอีกครั้ง' };
 
-  revalidatePath('/blood-requests');
-  revalidatePath(`/blood-requests/${id}`);
-  redirect(`/blood-requests/${id}`);
+  revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/blood-requests');
+  revalidatePath(`/admin/blood-requests/${id}`);
+  redirect(`/admin/blood-requests/${id}`);
 }
 
 export async function closeBloodRequest(
@@ -80,9 +81,10 @@ export async function closeBloodRequest(
   }
   if (!data) return { error: 'คำร้องถูกเปลี่ยนสถานะแล้ว กรุณากลับไปตรวจสอบอีกครั้ง' };
 
-  revalidatePath('/blood-requests');
-  revalidatePath(`/blood-requests/${id}`);
-  redirect(`/blood-requests/${id}`);
+  revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/blood-requests');
+  revalidatePath(`/admin/blood-requests/${id}`);
+  redirect(`/admin/blood-requests/${id}`);
 }
 
 export async function deleteBloodRequest(
@@ -108,6 +110,7 @@ export async function deleteBloodRequest(
   }
   if (!data) return { error: 'ไม่พบคำร้อง หรือคำร้องถูกลบไปแล้ว' };
 
-  revalidatePath('/blood-requests');
-  redirect('/blood-requests');
+  revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/blood-requests');
+  redirect('/admin/dashboard');
 }

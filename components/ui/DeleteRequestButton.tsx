@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { deleteBloodRequest, type RequestActionState } from '@/app/(authenticated)/(admin)/blood-requests/[id]/actions';
+import { deleteBloodRequest, type RequestActionState } from '@/app/(authenticated)/admin/blood-requests/[id]/actions';
 import { buttonClass } from './blood-request';
 
 const initialState: RequestActionState = { error: null };

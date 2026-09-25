@@ -57,7 +57,7 @@ export async function GET() {
       return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้" }, { status: 403 });
     }
 
-    // 5. 🔥 ตรวจสอบระยะพักฟื้น 90 วัน
+    // 5. ตรวจสอบระยะพักฟื้น 90 วัน
     let isCoolingDown = false;
     let daysRemaining = 0;
 
