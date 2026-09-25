@@ -378,7 +378,14 @@ export default function ProfilePage() {
                     <label className={LABEL_CLASS}>
                       <i className="fa-regular fa-calendar text-slate-700 mr-3"></i>วัน/เดือน/ปีเกิด <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <input type="date" required value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className={INPUT_CLASS} />
+                    <input
+                      type="date"
+                      required
+                      max={today}
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      className={INPUT_CLASS}
+                    />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>
