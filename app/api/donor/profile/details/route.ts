@@ -12,6 +12,10 @@ const PROFILE_COLUMNS =
 const BLOOD_TYPES = ["A", "B", "AB", "O"];
 const GENDERS = ["ชาย", "หญิง"];
 const MAX_NOTES_LENGTH = 500;
+const MIN_WEIGHT = 45;
+const MAX_WEIGHT = 300;
+const MIN_HEIGHT = 100;
+const MAX_HEIGHT = 250;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET() {
@@ -71,11 +75,14 @@ export async function PUT(request: Request) {
       { status: 400 },
     );
   }
-  if (!Number.isFinite(weight) || weight < 45) {
-    return NextResponse.json({ error: "น้ำหนักต้องไม่ต่ำกว่า 45 กิโลกรัม" }, { status: 400 });
+  if (!Number.isFinite(weight) || weight < MIN_WEIGHT) {
+    return NextResponse.json({ error: `น้ำหนักต้องไม่ต่ำกว่า ${MIN_WEIGHT} กิโลกรัม` }, { status: 400 });
   }
-  if (height !== null && (!Number.isFinite(height) || height <= 0)) {
-    return NextResponse.json({ error: "ส่วนสูงไม่ถูกต้อง" }, { status: 400 });
+  if (weight > MAX_WEIGHT) {
+    return NextResponse.json({ error: `น้ำหนักต้องไม่เกิน ${MAX_WEIGHT} กิโลกรัม` }, { status: 400 });
+  }
+  if (height !== null && (!Number.isFinite(height) || height < MIN_HEIGHT || height > MAX_HEIGHT)) {
+    return NextResponse.json({ error: `ส่วนสูงต้องอยู่ระหว่าง ${MIN_HEIGHT}–${MAX_HEIGHT} เซนติเมตร` }, { status: 400 });
   }
   if (medicalNotes.length > MAX_NOTES_LENGTH) {
     return NextResponse.json({ error: `รายละเอียดโรคประจำตัวต้องไม่เกิน ${MAX_NOTES_LENGTH} ตัวอักษร` }, { status: 400 });

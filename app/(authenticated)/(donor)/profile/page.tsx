@@ -407,6 +407,7 @@ export default function ProfilePage() {
                       type="number"
                       required
                       min={45}
+                      max={300}
                       step="0.1"
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
@@ -421,7 +422,8 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type="number"
-                      min={1}
+                      min={100}
+                      max={250}
                       value={height}
                       onChange={(e) => setHeight(e.target.value)}
                       placeholder="เช่น 170"
