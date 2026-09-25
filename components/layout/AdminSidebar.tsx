@@ -13,7 +13,7 @@ const items = [
   { label: 'Notifications', icon: 'bell' as const, href: '/notifications' },
   { label: 'History', icon: 'clock' as const, href: '/history' },
   { label: 'Users', icon: 'users' as const, href: '/users' },
-  { label: 'Hospitals', icon: 'hospital' as const, href: '/hospital-management' },
+  { label: 'Hospitals', icon: 'hospital' as const, href: '/admin/hospital' }, // เช็คตรงนี้ให้แน่ใจว่าเป็น /admin/hospital
   { label: 'Reports', icon: 'clock' as const, href: '/reports' },
   { label: 'Settings', icon: 'clock' as const, href: '/settings' },
 ];
