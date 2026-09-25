@@ -786,8 +786,9 @@ export default function ProfilePage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="min-w-44 flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition"
+                  disabled={saving || !isDirty}
+                  title={!isDirty && !saving ? "ยังไม่มีการเปลี่ยนแปลง" : undefined}
+                  className="min-w-44 flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 transition"
                 >
                   {saving ? (
                     <>
