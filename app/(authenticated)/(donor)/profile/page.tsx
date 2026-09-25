@@ -38,6 +38,7 @@ interface DonorProfileDetails {
   has_chronic_disease: boolean | null;
   medical_notes: string | null;
   last_donate_date: string | null;
+  consent_form_url: string | null;
 }
 
 const normalizeRh = (rh?: string | null) => {
@@ -111,6 +112,7 @@ export default function ProfilePage() {
 
   const [consentFile, setConsentFile] = useState<File | null>(null);
   const [consentFileError, setConsentFileError] = useState("");
+  const [consentFormPath, setConsentFormPath] = useState("");
 
   const [isReady, setIsReady] = useState(true);
   const [urgentNotifications, setUrgentNotifications] = useState(true);
@@ -158,6 +160,7 @@ export default function ProfilePage() {
           setMedicalNotes(profile.medical_notes ?? "");
           setIsReady(profile.is_ready ?? true);
           setLastDonateDate(profile.last_donate_date ?? "");
+          setConsentFormPath(profile.consent_form_url ?? "");
         }
       } catch (error) {
         setErrorMsg(error instanceof Error ? error.message : "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
@@ -181,8 +184,17 @@ export default function ProfilePage() {
     const file = e.target.files?.[0] ?? null;
     setConsentFileError("");
 
-    if (file && file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      setConsentFileError(`ขนาดไฟล์ต้องไม่เกิน ${MAX_FILE_SIZE_MB} MB`);
+    const isAllowedType = file && /\.(pdf|jpe?g)$/i.test(file.name);
+    const error = !file
+      ? ""
+      : !isAllowedType
+        ? "รองรับเฉพาะไฟล์ PDF หรือ JPG เท่านั้น"
+        : file.size > MAX_FILE_SIZE_MB * 1024 * 1024
+          ? `ขนาดไฟล์ต้องไม่เกิน ${MAX_FILE_SIZE_MB} MB`
+          : "";
+
+    if (error) {
+      setConsentFileError(error);
       setConsentFile(null);
       e.target.value = "";
       return;
@@ -226,10 +238,31 @@ export default function ProfilePage() {
       const data = await response.json();
       if (!response.ok) {
         setErrorMsg(data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-      } else {
-        setSuccessMsg("บันทึกข้อมูลโปรไฟล์สำเร็จ");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
       }
+
+      if (consentFile) {
+        const formData = new FormData();
+        formData.append("file", consentFile);
+        const uploadResponse = await fetch("/api/donor/profile/consent", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          setErrorMsg(`บันทึกข้อมูลแล้ว แต่แนบหนังสือยินยอมไม่สำเร็จ: ${uploadData.error || "กรุณาลองใหม่"}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        setConsentFormPath(uploadData.path);
+        setConsentFile(null);
+      }
+
+      setSuccessMsg("บันทึกข้อมูลโปรไฟล์สำเร็จ");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setErrorMsg("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
@@ -472,6 +505,17 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 {consentFileError && <p className="text-xs text-red-600 mt-2">{consentFileError}</p>}
+                {consentFile ? (
+                  <p className="mt-2 flex items-center gap-2 text-xs text-blue-600">
+                    <i className="fa-solid fa-circle-info"></i>
+                    ไฟล์จะถูกอัปโหลดเมื่อกด &quot;บันทึกข้อมูล&quot;
+                  </p>
+                ) : consentFormPath ? (
+                  <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                    <i className="fa-solid fa-circle-check"></i>
+                    แนบหนังสือยินยอมแล้ว
+                  </p>
+                ) : null}
               </Section>
 
               <Section icon="fa-regular fa-bell" title="สถานะความพร้อมบริจาค">
