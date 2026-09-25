@@ -277,6 +277,35 @@ export default function ProfilePage() {
     setMedicalNotes(next.join(", ").slice(0, MAX_NOTES_LENGTH));
   };
 
+  const handleReadinessToggle = async (nextValue: boolean) => {
+    if (isCoolingDown || saving) return;
+
+    const previousValue = isReady;
+    setIsReady(nextValue);
+    setErrorMsg("");
+
+    try {
+      const response = await fetch("/api/donor/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ is_ready: nextValue }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "ไม่สามารถอัปเดตสถานะได้");
+
+      setSavedSnapshot((snapshot) => {
+        if (!snapshot) return snapshot;
+        const savedValues = JSON.parse(snapshot) as FormValues;
+        return JSON.stringify({ ...savedValues, isReady: nextValue });
+      });
+    } catch (error) {
+      setIsReady(previousValue);
+      setErrorMsg(error instanceof Error ? error.message : "ไม่สามารถอัปเดตสถานะได้");
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setConsentFileError("");
@@ -700,12 +729,12 @@ export default function ProfilePage() {
               </Section>
 
               <Section icon="fa-regular fa-bell" title="สถานะความพร้อมบริจาค">
-                <div className="grid sm:grid-cols-2 gap-4 sm:gap-0 sm:divide-x sm:divide-slate-200">
+                <div className="grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-slate-200">
                   <div className="flex items-start gap-3 sm:pr-5">
                     <Toggle
                       label="พร้อมบริจาค"
                       checked={isReady && !isCoolingDown}
-                      onChange={setIsReady}
+                      onChange={handleReadinessToggle}
                       disabled={isCoolingDown}
                       activeClass="peer-checked:bg-emerald-500"
                     />
