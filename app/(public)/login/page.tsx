@@ -66,8 +66,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-[#ea384c] selection:text-white flex flex-col justify-center items-center p-4 sm:p-6">
-      
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-[#ea384c] selection:text-white flex flex-col justify-start sm:justify-center items-center p-4 pt-6 sm:p-6">
       {/* ปุ่มย้อนกลับหน้าหลัก */}
       <div className="w-full max-w-[480px] mb-4">
         <Link
