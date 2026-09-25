@@ -203,6 +203,21 @@ export default function ProfilePage() {
     setConsentFile(file);
   };
 
+  const openConsentForm = async () => {
+    // Opened before the fetch so popup blockers treat it as a direct click.
+    const viewer = window.open("", "_blank");
+    try {
+      const response = await fetch("/api/donor/profile/consent", { credentials: "include" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      if (viewer) viewer.location.href = data.url;
+      else window.location.href = data.url;
+    } catch (error) {
+      viewer?.close();
+      setConsentFileError(error instanceof Error && error.message ? error.message : "ไม่สามารถเปิดไฟล์ได้");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -511,9 +526,16 @@ export default function ProfilePage() {
                     ไฟล์จะถูกอัปโหลดเมื่อกด &quot;บันทึกข้อมูล&quot;
                   </p>
                 ) : consentFormPath ? (
-                  <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                  <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-700">
                     <i className="fa-solid fa-circle-check"></i>
                     แนบหนังสือยินยอมแล้ว
+                    <button
+                      type="button"
+                      onClick={openConsentForm}
+                      className="font-bold text-blue-600 underline underline-offset-2 hover:text-blue-700"
+                    >
+                      เปิดดูไฟล์
+                    </button>
                   </p>
                 ) : null}
               </Section>

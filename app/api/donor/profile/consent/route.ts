@@ -5,12 +5,50 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const BUCKET = "consent-documents";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const SIGNED_URL_TTL_SECONDS = 10 * 60;
 
 // Checked against the file's first bytes, not the browser-reported type.
 const FILE_KINDS = [
   { ext: "pdf", contentType: "application/pdf", signature: [0x25, 0x50, 0x44, 0x46] },
   { ext: "jpg", contentType: "image/jpeg", signature: [0xff, 0xd8, 0xff] },
 ];
+
+export async function GET() {
+  const user = await getDonorSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
+  }
+
+  const { data: profile, error } = await supabaseAdmin
+    .from("donor_profiles")
+    .select("consent_form_url")
+    .eq("donor_id", user.user_id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: "ไม่สามารถโหลดหนังสือยินยอมได้", details: error.message }, { status: 500 });
+  }
+
+  const stored = profile?.consent_form_url;
+  if (!stored) {
+    return NextResponse.json({ error: "ยังไม่ได้แนบหนังสือยินยอม" }, { status: 404 });
+  }
+
+  if (/^https?:\/\//.test(stored)) {
+    return NextResponse.json({ url: stored });
+  }
+
+  const { data: signed, error: signError } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .createSignedUrl(stored, SIGNED_URL_TTL_SECONDS);
+
+  if (signError || !signed) {
+    return NextResponse.json({ error: "ไม่พบไฟล์หนังสือยินยอม", details: signError?.message }, { status: 404 });
+  }
+
+  return NextResponse.json({ url: signed.signedUrl });
+}
 
 export async function POST(request: Request) {
   const user = await getDonorSessionUser();
