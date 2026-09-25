@@ -127,6 +127,7 @@ export default function ProfilePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [account, setAccount] = useState<{ fullName: string; userName: string } | null>(null);
   const [phone, setPhone] = useState("");
   const [province, setProvince] = useState("");
   const [bloodType, setBloodType] = useState("");
@@ -177,6 +178,9 @@ export default function ProfilePage() {
         if (!response.ok) throw new Error(data.error || "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
 
         setPhone(formatPhoneNumber(data.user?.phone ?? ""));
+        if (data.user) {
+          setAccount({ fullName: data.user.full_name, userName: data.user.user_name });
+        }
 
         const profile = data.profile as DonorProfileDetails | null;
         if (profile) {
@@ -341,6 +345,23 @@ export default function ProfilePage() {
             <div className="py-16 text-center text-sm text-slate-500">กำลังโหลดข้อมูลโปรไฟล์...</div>
           ) : (
             <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 space-y-5">
+              {account && (
+                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <span className="relative size-14 shrink-0 rounded-full bg-rose-100 text-[#ea384c] flex items-center justify-center">
+                    <i className="fa-regular fa-user text-2xl"></i>
+                    <i className="fa-solid fa-heart absolute bottom-1 right-1 text-[11px]"></i>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-bold text-[#0e3b6c]">{account.fullName}</p>
+                    <p className="truncate text-xs text-slate-400">@{account.userName}</p>
+                    <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#0e3b6c]">
+                      <i className="fa-regular fa-circle-user"></i>
+                      ผู้ใช้งานทั่วไป
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-3 pb-1">
                 <span className="size-12 rounded-full bg-blue-50 text-[#0e3b6c] flex items-center justify-center shrink-0">
                   <i className="fa-regular fa-user text-lg"></i>
