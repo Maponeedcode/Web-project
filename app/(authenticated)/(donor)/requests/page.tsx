@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DonorNavbar from "@/components/layout/DonorNavbar";
@@ -17,6 +17,7 @@ interface DonorProfile {
   rh_factor: "Positive" | "Negative" | "+" | "-";
   province: string;
   is_ready: boolean;
+  last_donate_date?: string | null;
 }
 
 export default function RequestsPage() {
@@ -24,6 +25,10 @@ export default function RequestsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [requests, setRequests] = useState<BloodRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [coolingDownInfo, setCoolingDownInfo] = useState<{
+    isCoolingDown: boolean;
+    daysRemaining: number;
+  }>({ isCoolingDown: false, daysRemaining: 0 });
 
   // ฟังก์ชันแปลง Rh Factor ให้เป็นรูปแบบสากล (+ หรือ -) เพื่อนำมา match กันได้อย่างแม่นยำ
   const normalizeRh = (rh?: string | null) => {
@@ -70,13 +75,32 @@ export default function RequestsPage() {
         // ==========================================
         const { data: donorProfile, error: profileError } = await supabase
           .from("donor_profiles")
-          .select("donor_id, blood_type, rh_factor, province, is_ready")
+          .select("donor_id, blood_type, rh_factor, province, is_ready, last_donate_date")
           .eq("donor_id", userId)
           .single<DonorProfile>();
 
         if (profileError || !donorProfile) {
           console.error("Donor profile error:", profileError);
           return;
+        }
+
+        // เช็คระยะพักฟื้น 90 วันหลังบริจาค
+        if (donorProfile.last_donate_date) {
+          const donatedAt = new Date(`${donorProfile.last_donate_date}T00:00:00`);
+          const nextDonationDate = new Date(donatedAt);
+          nextDonationDate.setDate(nextDonationDate.getDate() + 90);
+
+          const millisecondsPerDay = 1000 * 60 * 60 * 24;
+          const daysRemaining = Math.max(
+            0,
+            Math.ceil((nextDonationDate.getTime() - Date.now()) / millisecondsPerDay)
+          );
+
+          if (daysRemaining > 0) {
+            setCoolingDownInfo({ isCoolingDown: true, daysRemaining });
+            setRequests([]);
+            return;
+          }
         }
 
         // ==========================================
@@ -176,12 +200,34 @@ export default function RequestsPage() {
               <div className="py-12 text-center text-sm text-slate-500">
                 กำลังโหลดรายการคำขอรับบริจาคโลหิต...
               </div>
+            ) : coolingDownInfo.isCoolingDown ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center shadow-sm">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 mb-3">
+                  <i className="fa-solid fa-hourglass-half text-xl" />
+                </div>
+                <h3 className="text-base font-bold text-slate-800">
+                  คุณกำลังอยู่ในระยะพักฟื้นร่างกาย
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  เพื่อสุขภาพและความปลอดภัยของคุณ กรุณาเว้นระยะห่างการบริจาค 90 วัน (เหลืออีก {coolingDownInfo.daysRemaining} วัน)
+                </p>
+              </div>
             ) : (
-              <RequestFeed requests={requests} />
+              <Suspense
+                fallback={
+                  <div className="py-12 text-center text-sm text-slate-500">
+                    กำลังโหลดรายการคำขอรับบริจาคโลหิต...
+                  </div>
+                }
+              >
+                <RequestFeed requests={requests} />
+              </Suspense>
             )}
 
             {/* Footer */}
+                      <div className="mt-10 sm:mt-12">
             <Footer />
+          </div>
           </div>
         </div>
       </main>

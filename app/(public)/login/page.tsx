@@ -52,11 +52,11 @@ function LoginForm() {
         return;
       }
 
-      // นำทางตามประเภทผู้ใช้งาน (ปรับแก้ให้วิ่งไปที่ /blood-requests แทน /admin/dashboard)
+      // นำทางตามประเภทผู้ใช้งาน
       if (data.user?.role === 'hospital_admin' || data.user?.role === 'system_admin') {
-        router.push('/blood-requests');
+        router.push('/admin/dashboard');
       } else {
-        router.push('/blood-requests');
+        router.push('/dashboard');
       }
       router.refresh();
     } catch {
@@ -66,8 +66,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-[#ea384c] selection:text-white flex flex-col justify-center items-center p-4 sm:p-6">
-      
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-[#ea384c] selection:text-white flex flex-col justify-start sm:justify-center items-center p-4 pt-6 sm:p-6">
       {/* ปุ่มย้อนกลับหน้าหลัก */}
       <div className="w-full max-w-[480px] mb-4">
         <Link

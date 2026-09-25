@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { bangkokToday, type Hospital } from '@/types/database';
-import { updateBloodRequest, type RequestActionState } from '@/app/(authenticated)/(admin)/blood-requests/[id]/actions';
+import { updateBloodRequest, type RequestActionState } from '@/app/(authenticated)/admin/blood-requests/[id]/actions';
 import { type RequestView, Heading, Icon, InfoTable, SectionTitle, basePath, buttonClass, cardClass, inputClass, primaryButtonClass } from './blood-request';
 
 const initialState: RequestActionState = { error: null };

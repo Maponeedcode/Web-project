@@ -1,0 +1,165 @@
+import { NextResponse } from "next/server";
+
+import { CONSENT_BUCKET, CONSENT_EXTENSIONS, consentPathFor, isOwnConsentPath } from "@/lib/consentStorage";
+import { calculateAge, MAX_DONOR_AGE, MIN_DONOR_AGE } from "@/lib/donorEligibility";
+import { getDonorSessionUser } from "@/lib/donorSession";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { THAI_PROVINCES } from "@/lib/thaiProvinces";
+import { bangkokToday } from "@/types/database";
+
+const PROFILE_COLUMNS =
+  "blood_type, rh_factor, gender, date_of_birth, weight, height, province, is_ready, has_chronic_disease, medical_notes, consent_form_url, last_donate_date";
+
+const BLOOD_TYPES = ["A", "B", "AB", "O"];
+const GENDERS = ["ชาย", "หญิง"];
+const MAX_NOTES_LENGTH = 500;
+const MIN_WEIGHT = 45;
+const MAX_WEIGHT = 300;
+const MIN_HEIGHT = 100;
+const MAX_HEIGHT = 250;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function GET() {
+  const user = await getDonorSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
+  }
+
+  const [userResult, profileResult] = await Promise.all([
+    supabaseAdmin.from("users").select("user_name, full_name, phone").eq("user_id", user.user_id).maybeSingle(),
+    supabaseAdmin.from("donor_profiles").select(PROFILE_COLUMNS).eq("donor_id", user.user_id).maybeSingle(),
+  ]);
+
+  const error = userResult.error ?? profileResult.error;
+  if (error) {
+    return NextResponse.json({ error: "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้", details: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ user: userResult.data, profile: profileResult.data });
+}
+
+export async function PUT(request: Request) {
+  const user = await getDonorSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  if (!body) {
+    return NextResponse.json({ error: "รูปแบบข้อมูลไม่ถูกต้อง" }, { status: 400 });
+  }
+
+  const phone = String(body.phone ?? "").replace(/[^0-9]/g, "");
+  const weight = Number(body.weight);
+  const height = body.height === "" || body.height == null ? null : Number(body.height);
+  const medicalNotes = String(body.medicalNotes ?? "").trim();
+  const lastDonateDate = body.lastDonateDate ? String(body.lastDonateDate) : null;
+
+  if (phone.length < 9 || phone.length > 10) {
+    return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (9-10 หลัก)" }, { status: 400 });
+  }
+  if (!THAI_PROVINCES.includes(body.province)) {
+    return NextResponse.json({ error: "กรุณาเลือกจังหวัด" }, { status: 400 });
+  }
+  if (!BLOOD_TYPES.includes(body.bloodType) || !["+", "-"].includes(body.rh)) {
+    return NextResponse.json({ error: "กรุณาเลือกหมู่โลหิตให้ครบถ้วน" }, { status: 400 });
+  }
+  if (!DATE_PATTERN.test(String(body.dateOfBirth ?? "")) || !GENDERS.includes(body.gender)) {
+    return NextResponse.json({ error: "กรุณากรอกวันเกิดและเพศให้ครบถ้วน" }, { status: 400 });
+  }
+  const age = calculateAge(body.dateOfBirth);
+  if (!Number.isFinite(age) || age < MIN_DONOR_AGE || age > MAX_DONOR_AGE) {
+    return NextResponse.json(
+      { error: `อายุต้องอยู่ระหว่าง ${MIN_DONOR_AGE}–${MAX_DONOR_AGE} ปี จึงจะลงทะเบียนเป็นผู้บริจาคได้` },
+      { status: 400 },
+    );
+  }
+  if (!Number.isFinite(weight) || weight < MIN_WEIGHT) {
+    return NextResponse.json({ error: `น้ำหนักต้องไม่ต่ำกว่า ${MIN_WEIGHT} กิโลกรัม` }, { status: 400 });
+  }
+  if (weight > MAX_WEIGHT) {
+    return NextResponse.json({ error: `น้ำหนักต้องไม่เกิน ${MAX_WEIGHT} กิโลกรัม` }, { status: 400 });
+  }
+  if (height !== null && (!Number.isFinite(height) || height < MIN_HEIGHT || height > MAX_HEIGHT)) {
+    return NextResponse.json({ error: `ส่วนสูงต้องอยู่ระหว่าง ${MIN_HEIGHT}–${MAX_HEIGHT} เซนติเมตร` }, { status: 400 });
+  }
+  if (medicalNotes.length > MAX_NOTES_LENGTH) {
+    return NextResponse.json({ error: `รายละเอียดโรคประจำตัวต้องไม่เกิน ${MAX_NOTES_LENGTH} ตัวอักษร` }, { status: 400 });
+  }
+  if (lastDonateDate !== null && !DATE_PATTERN.test(lastDonateDate)) {
+    return NextResponse.json({ error: "วันที่บริจาคล่าสุดไม่ถูกต้อง" }, { status: 400 });
+  }
+  if (lastDonateDate !== null && lastDonateDate > bangkokToday()) {
+    return NextResponse.json({ error: "วันที่บริจาคล่าสุดต้องไม่เป็นวันในอนาคต" }, { status: 400 });
+  }
+
+  const consentFormPath = body.consentFormPath ? String(body.consentFormPath) : null;
+  if (consentFormPath !== null) {
+    const fileName = consentFormPath.split("/").pop();
+    const { data: files } = await supabaseAdmin.storage.from(CONSENT_BUCKET).list(user.user_id);
+    if (!isOwnConsentPath(user.user_id, consentFormPath) || !files?.some((file) => file.name === fileName)) {
+      return NextResponse.json({ error: "ไม่พบไฟล์หนังสือยินยอมที่อัปโหลด กรุณาแนบใหม่" }, { status: 400 });
+    }
+  }
+
+  if (age === MIN_DONOR_AGE && consentFormPath === null) {
+    const { data: existing } = await supabaseAdmin
+      .from("donor_profiles")
+      .select("consent_form_url")
+      .eq("donor_id", user.user_id)
+      .maybeSingle();
+
+    if (!existing?.consent_form_url) {
+      return NextResponse.json(
+        { error: `ผู้บริจาคอายุ ${MIN_DONOR_AGE} ปี ต้องแนบหนังสือยินยอมจากผู้ปกครองก่อนบันทึก` },
+        { status: 400 },
+      );
+    }
+  }
+
+  const hasChronicDisease = Boolean(body.hasChronicDisease);
+
+  const { error: userError } = await supabaseAdmin.from("users").update({ phone }).eq("user_id", user.user_id);
+  if (userError) {
+    return NextResponse.json({ error: "ไม่สามารถบันทึกเบอร์โทรศัพท์ได้", details: userError.message }, { status: 500 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("donor_profiles")
+    .upsert(
+      {
+        donor_id: user.user_id,
+        blood_type: body.bloodType,
+        rh_factor: body.rh === "+" ? "Positive" : "Negative",
+        gender: body.gender,
+        date_of_birth: body.dateOfBirth,
+        weight,
+        height,
+        province: body.province,
+        is_ready: Boolean(body.isReady),
+        has_chronic_disease: hasChronicDisease,
+        medical_notes: hasChronicDisease && medicalNotes ? medicalNotes : null,
+        last_donate_date: lastDonateDate,
+        ...(consentFormPath !== null && { consent_form_url: consentFormPath }),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "donor_id" },
+    )
+    .select(PROFILE_COLUMNS)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้", details: error.message }, { status: 500 });
+  }
+
+  if (consentFormPath !== null) {
+    const stalePaths = CONSENT_EXTENSIONS.map((ext) => consentPathFor(user.user_id, ext)).filter(
+      (path) => path !== consentFormPath,
+    );
+    await supabaseAdmin.storage.from(CONSENT_BUCKET).remove(stalePaths);
+  }
+
+  return NextResponse.json({ profile: data });
+}

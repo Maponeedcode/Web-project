@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import CloseRequestButton from './CloseRequestButton';
+import DeleteRequestButton from './DeleteRequestButton';
 import {
   type RequestView, Badge, Heading, Icon, InfoTable, SectionTitle, basePath, buttonClass,
   cardClass, formatDate, formatDateTime, primaryButtonClass, shortRequestId,
@@ -16,6 +17,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
         <Link className={buttonClass} href={basePath}><Icon name="arrow" />กลับ</Link>
         {editable ? <Link className={buttonClass} href={`${basePath}/${request.id}/edit`}>แก้ไขคำร้อง</Link> : <button className={buttonClass} disabled>แก้ไขคำร้อง</button>}
         {editable ? <CloseRequestButton requestId={request.id} /> : <button className={primaryButtonClass} disabled>ปิดคำร้องแล้ว</button>}
+        <DeleteRequestButton requestId={request.id} disabled={request.responseCount > 0} />
       </div>
     </Heading>
 
@@ -25,7 +27,7 @@ export default function RequestDetail({ request }: { request: RequestView }) {
         <div><h2 className="mb-2 text-base font-semibold sm:text-xl" title={request.id}>คำร้องขอเลือด #{shortRequestId(request.id)}</h2><h3 className="flex items-center gap-2 text-sm sm:text-base"><Icon name="hospital" />{request.hospital}</h3><p className="mb-2 text-sm text-[#6480a1]">จ.{request.province}</p><small className="text-xs text-[#6480a1]">สร้างเมื่อ {formatDateTime(request.createdAt)}</small></div>
       </div>
       <div className="min-w-0 xl:w-1/2">
-        <div className="mb-3 flex flex-wrap gap-2"><UrgencyBadge urgency={request.urgency} /><Badge color={statusColor(displayStatus)}>{statusLabels[displayStatus]}</Badge></div>
+        <div className="mb-3 flex flex-wrap gap-2"><UrgencyBadge urgency={request.urgency} /><Badge color={statusColor(request.status)}>{statusLabels[displayStatus]}</Badge></div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="flex items-center gap-2 rounded-lg border border-[#eef4f9] bg-[#f5f9fd] p-3"><Icon name="clock" /><span><small className="block text-xs text-[#6480a1]">วันที่ต้องการเลือด</small><b className="text-xs">{formatDate(request.date)}</b></span></div>
           <div className="flex items-center gap-2 rounded-lg border border-[#eef4f9] bg-[#f5f9fd] p-3"><Icon name="drop" className="size-5 shrink-0" /><span><small className="block text-xs text-[#6480a1]">จำนวนที่ต้องการ</small><b className="text-xs">{request.units} ยูนิต</b></span></div>
