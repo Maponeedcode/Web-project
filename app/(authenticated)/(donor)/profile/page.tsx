@@ -8,6 +8,7 @@ import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
 import { calculateAge, evaluateDonorEligibility } from "@/lib/donorEligibility";
 import { THAI_PROVINCES } from "@/lib/thaiProvinces";
+import { bangkokToday } from "@/types/database";
 
 const COMMON_CONDITIONS = [
   "เบาหวาน",
@@ -122,6 +123,7 @@ export default function ProfilePage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const today = bangkokToday();
   const eligibility = evaluateDonorEligibility({
     weight: weight ? Number(weight) : null,
     date_of_birth: dateOfBirth || null,
@@ -596,6 +598,7 @@ export default function ProfilePage() {
                 <Section icon="fa-regular fa-calendar" title="วันที่บริจาคล่าสุด">
                   <input
                     type="date"
+                    max={today}
                     value={lastDonateDate}
                     onChange={(e) => setLastDonateDate(e.target.value)}
                     className={INPUT_CLASS}

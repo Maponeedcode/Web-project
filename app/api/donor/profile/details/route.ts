@@ -4,6 +4,7 @@ import { calculateAge, MAX_DONOR_AGE, MIN_DONOR_AGE } from "@/lib/donorEligibili
 import { getDonorSessionUser } from "@/lib/donorSession";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { THAI_PROVINCES } from "@/lib/thaiProvinces";
+import { bangkokToday } from "@/types/database";
 
 const PROFILE_COLUMNS =
   "blood_type, rh_factor, gender, date_of_birth, weight, height, province, is_ready, has_chronic_disease, medical_notes, consent_form_url, last_donate_date";
@@ -81,6 +82,9 @@ export async function PUT(request: Request) {
   }
   if (lastDonateDate !== null && !DATE_PATTERN.test(lastDonateDate)) {
     return NextResponse.json({ error: "วันที่บริจาคล่าสุดไม่ถูกต้อง" }, { status: 400 });
+  }
+  if (lastDonateDate !== null && lastDonateDate > bangkokToday()) {
+    return NextResponse.json({ error: "วันที่บริจาคล่าสุดต้องไม่เป็นวันในอนาคต" }, { status: 400 });
   }
 
   const hasChronicDisease = Boolean(body.hasChronicDisease);
