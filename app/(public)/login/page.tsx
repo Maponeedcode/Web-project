@@ -52,11 +52,11 @@ function LoginForm() {
         return;
       }
 
-      // นำทางตามประเภทผู้ใช้งาน
+      // นำทางตามประเภทผู้ใช้งาน (ปรับแก้ให้วิ่งไปที่ /blood-requests แทน /admin/dashboard)
       if (data.user?.role === 'hospital_admin' || data.user?.role === 'system_admin') {
-        router.push('/admin/dashboard');
+        router.push('/blood-requests');
       } else {
-        router.push('/dashboard');
+        router.push('/blood-requests');
       }
       router.refresh();
     } catch {

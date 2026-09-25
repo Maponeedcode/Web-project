@@ -20,7 +20,6 @@ export async function POST(req: Request) {
     }
 
     // 1.Find Username
-    // Different between single and maybeSingle is maybeSingle throw NULL when not found
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('user_id, user_name, full_name, password_hash, role')
@@ -49,7 +48,6 @@ export async function POST(req: Request) {
 
     // 3. Create Session Token and Set Expired 7 days
     const sessionToken = crypto.randomBytes(32).toString('hex');
-    // 1000ms to 1s
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // 4. save into sessions
@@ -78,6 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: 'เข้าสู่ระบบสำเร็จ',
+      redirectUrl: '/blood-requests',
       user: {
         user_id: user.user_id,
         user_name: user.user_name,

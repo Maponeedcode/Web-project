@@ -514,3 +514,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+<div className="mt-10 sm:mt-12">
+  <Footer />
+</div>
