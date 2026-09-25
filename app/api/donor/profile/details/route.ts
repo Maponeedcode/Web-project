@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { calculateAge, MAX_DONOR_AGE, MIN_DONOR_AGE } from "@/lib/donorEligibility";
 import { getDonorSessionUser } from "@/lib/donorSession";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { THAI_PROVINCES } from "@/lib/thaiProvinces";
@@ -61,6 +62,13 @@ export async function PUT(request: Request) {
   }
   if (!DATE_PATTERN.test(String(body.dateOfBirth ?? "")) || !GENDERS.includes(body.gender)) {
     return NextResponse.json({ error: "กรุณากรอกวันเกิดและเพศให้ครบถ้วน" }, { status: 400 });
+  }
+  const age = calculateAge(body.dateOfBirth);
+  if (!Number.isFinite(age) || age < MIN_DONOR_AGE || age > MAX_DONOR_AGE) {
+    return NextResponse.json(
+      { error: `อายุต้องอยู่ระหว่าง ${MIN_DONOR_AGE}–${MAX_DONOR_AGE} ปี จึงจะลงทะเบียนเป็นผู้บริจาคได้` },
+      { status: 400 },
+    );
   }
   if (!Number.isFinite(weight) || weight < 45) {
     return NextResponse.json({ error: "น้ำหนักต้องไม่ต่ำกว่า 45 กิโลกรัม" }, { status: 400 });

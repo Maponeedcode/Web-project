@@ -13,6 +13,19 @@ export interface EligibilityResult {
   reasons: string[];
 }
 
+export const MIN_DONOR_AGE = 17;
+export const MAX_DONOR_AGE = 70;
+
+export function calculateAge(dateOfBirth: string, today = new Date()): number {
+  const birth = new Date(dateOfBirth);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 /**
  * ตรวจสอบเงื่อนไขทางการแพทย์และความปลอดภัยของผู้บริจาคโลหิต
  */
@@ -44,15 +57,9 @@ export function evaluateDonorEligibility(profile?: DonorProfileData | null): Eli
 
   // 3. คำนวณอายุและตรวจสอบเกณฑ์ (17–70 ปี / ครั้งแรก <= 60 ปี)
   if (profile.date_of_birth) {
-    const today = new Date();
-    const birth = new Date(profile.date_of_birth);
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
+    const age = calculateAge(profile.date_of_birth);
 
-    if (age < 17 || age > 70) {
+    if (age < MIN_DONOR_AGE || age > MAX_DONOR_AGE) {
       reasons.push('อายุไม่อยู่ในเกณฑ์ที่สามารถบริจาคได้ (17–70 ปี)');
     } else {
       if (age === 17) {
