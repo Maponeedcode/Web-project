@@ -27,6 +27,22 @@ const INPUT_CLASS =
   "w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] focus:bg-white transition";
 const LABEL_CLASS = "flex items-center text-xs sm:text-sm font-bold text-[#0e3b6c] mb-1.5";
 
+interface FormValues {
+  phone: string;
+  province: string;
+  bloodType: string;
+  rh: string;
+  dateOfBirth: string;
+  gender: string;
+  weight: string;
+  height: string;
+  hasChronicDisease: boolean;
+  medicalNotes: string;
+  isReady: boolean;
+  urgentNotifications: boolean;
+  lastDonateDate: string;
+}
+
 interface DonorProfileDetails {
   blood_type: string | null;
   rh_factor: string | null;
@@ -164,6 +180,36 @@ export default function ProfilePage() {
   const canCheckEligibility = Boolean(dateOfBirth && weight);
   const selectedConditions = splitNotes(medicalNotes);
 
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const currentValues: FormValues = {
+    phone,
+    province,
+    bloodType,
+    rh,
+    dateOfBirth,
+    gender,
+    weight,
+    height,
+    hasChronicDisease,
+    medicalNotes,
+    isReady,
+    urgentNotifications,
+    lastDonateDate,
+  };
+  const isDirty = savedSnapshot !== null && (JSON.stringify(currentValues) !== savedSnapshot || consentFile !== null);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty]);
+
+  const handleCancel = () => {
+    if (isDirty && !window.confirm("มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?")) return;
+    router.push("/dashboard");
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -177,26 +223,42 @@ export default function ProfilePage() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
 
-        setPhone(formatPhoneNumber(data.user?.phone ?? ""));
         if (data.user) {
           setAccount({ fullName: data.user.full_name, userName: data.user.user_name });
         }
 
         const profile = data.profile as DonorProfileDetails | null;
-        if (profile) {
-          setProvince(profile.province ?? "");
-          setBloodType(profile.blood_type ?? "");
-          setRh(normalizeRh(profile.rh_factor));
-          setDateOfBirth(profile.date_of_birth ?? "");
-          setGender(profile.gender === "หญิง" ? "หญิง" : "ชาย");
-          setWeight(profile.weight != null ? String(profile.weight) : "");
-          setHeight(profile.height != null ? String(profile.height) : "");
-          setHasChronicDisease(Boolean(profile.has_chronic_disease));
-          setMedicalNotes(profile.medical_notes ?? "");
-          setIsReady(profile.is_ready ?? true);
-          setLastDonateDate(profile.last_donate_date ?? "");
-          setConsentFormPath(profile.consent_form_url ?? "");
-        }
+        const loaded: FormValues = {
+          phone: formatPhoneNumber(data.user?.phone ?? ""),
+          province: profile?.province ?? "",
+          bloodType: profile?.blood_type ?? "",
+          rh: normalizeRh(profile?.rh_factor),
+          dateOfBirth: profile?.date_of_birth ?? "",
+          gender: profile?.gender === "หญิง" ? "หญิง" : "ชาย",
+          weight: profile?.weight != null ? String(profile.weight) : "",
+          height: profile?.height != null ? String(profile.height) : "",
+          hasChronicDisease: Boolean(profile?.has_chronic_disease),
+          medicalNotes: profile?.medical_notes ?? "",
+          isReady: profile?.is_ready ?? true,
+          urgentNotifications: true,
+          lastDonateDate: profile?.last_donate_date ?? "",
+        };
+
+        setPhone(loaded.phone);
+        setProvince(loaded.province);
+        setBloodType(loaded.bloodType);
+        setRh(loaded.rh);
+        setDateOfBirth(loaded.dateOfBirth);
+        setGender(loaded.gender);
+        setWeight(loaded.weight);
+        setHeight(loaded.height);
+        setHasChronicDisease(loaded.hasChronicDisease);
+        setMedicalNotes(loaded.medicalNotes);
+        setIsReady(loaded.isReady);
+        setUrgentNotifications(loaded.urgentNotifications);
+        setLastDonateDate(loaded.lastDonateDate);
+        setConsentFormPath(profile?.consent_form_url ?? "");
+        setSavedSnapshot(JSON.stringify(loaded));
       } catch (error) {
         setErrorMsg(error instanceof Error ? error.message : "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
       } finally {
@@ -269,6 +331,7 @@ export default function ProfilePage() {
       return;
     }
 
+    const submittedValues = currentValues;
     setSaving(true);
     try {
       let uploadedConsentPath: string | null = null;
@@ -325,6 +388,7 @@ export default function ProfilePage() {
         setConsentFile(null);
       }
 
+      setSavedSnapshot(JSON.stringify(submittedValues));
       setSuccessMsg("บันทึกข้อมูลโปรไฟล์สำเร็จ");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -715,7 +779,7 @@ export default function ProfilePage() {
               <div className="flex justify-center gap-4 pt-6 border-t border-slate-200">
                 <button
                   type="button"
-                  onClick={() => router.push("/dashboard")}
+                  onClick={handleCancel}
                   className="min-w-36 px-8 py-3 rounded-xl text-sm font-bold text-[#0e3b6c] bg-white border-2 border-slate-300 hover:bg-slate-50 transition"
                 >
                   ยกเลิก
