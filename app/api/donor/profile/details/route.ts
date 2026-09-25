@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { CONSENT_BUCKET, CONSENT_EXTENSIONS, consentPathFor, isOwnConsentPath } from "@/lib/consentStorage";
 import { calculateAge, MAX_DONOR_AGE, MIN_DONOR_AGE } from "@/lib/donorEligibility";
 import { getDonorSessionUser } from "@/lib/donorSession";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -94,6 +95,30 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "วันที่บริจาคล่าสุดต้องไม่เป็นวันในอนาคต" }, { status: 400 });
   }
 
+  const consentFormPath = body.consentFormPath ? String(body.consentFormPath) : null;
+  if (consentFormPath !== null) {
+    const fileName = consentFormPath.split("/").pop();
+    const { data: files } = await supabaseAdmin.storage.from(CONSENT_BUCKET).list(user.user_id);
+    if (!isOwnConsentPath(user.user_id, consentFormPath) || !files?.some((file) => file.name === fileName)) {
+      return NextResponse.json({ error: "ไม่พบไฟล์หนังสือยินยอมที่อัปโหลด กรุณาแนบใหม่" }, { status: 400 });
+    }
+  }
+
+  if (age === MIN_DONOR_AGE && consentFormPath === null) {
+    const { data: existing } = await supabaseAdmin
+      .from("donor_profiles")
+      .select("consent_form_url")
+      .eq("donor_id", user.user_id)
+      .maybeSingle();
+
+    if (!existing?.consent_form_url) {
+      return NextResponse.json(
+        { error: `ผู้บริจาคอายุ ${MIN_DONOR_AGE} ปี ต้องแนบหนังสือยินยอมจากผู้ปกครองก่อนบันทึก` },
+        { status: 400 },
+      );
+    }
+  }
+
   const hasChronicDisease = Boolean(body.hasChronicDisease);
 
   const { error: userError } = await supabaseAdmin.from("users").update({ phone }).eq("user_id", user.user_id);
@@ -117,6 +142,7 @@ export async function PUT(request: Request) {
         has_chronic_disease: hasChronicDisease,
         medical_notes: hasChronicDisease && medicalNotes ? medicalNotes : null,
         last_donate_date: lastDonateDate,
+        ...(consentFormPath !== null && { consent_form_url: consentFormPath }),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "donor_id" },
@@ -126,6 +152,13 @@ export async function PUT(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้", details: error.message }, { status: 500 });
+  }
+
+  if (consentFormPath !== null) {
+    const stalePaths = CONSENT_EXTENSIONS.map((ext) => consentPathFor(user.user_id, ext)).filter(
+      (path) => path !== consentFormPath,
+    );
+    await supabaseAdmin.storage.from(CONSENT_BUCKET).remove(stalePaths);
   }
 
   return NextResponse.json({ profile: data });

@@ -241,8 +241,35 @@ export default function ProfilePage() {
       return;
     }
 
+    if (eligibility.requiresParentConsent && !consentFile && !consentFormPath) {
+      setErrorMsg("ผู้บริจาคอายุ 17 ปี ต้องแนบหนังสือยินยอมจากผู้ปกครองก่อนบันทึก");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setSaving(true);
     try {
+      let uploadedConsentPath: string | null = null;
+
+      if (consentFile) {
+        const formData = new FormData();
+        formData.append("file", consentFile);
+        const uploadResponse = await fetch("/api/donor/profile/consent", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          setErrorMsg(`แนบหนังสือยินยอมไม่สำเร็จ: ${uploadData.error || "กรุณาลองใหม่"}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        uploadedConsentPath = uploadData.path;
+      }
+
       const response = await fetch("/api/donor/profile/details", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -260,32 +287,19 @@ export default function ProfilePage() {
           medicalNotes,
           isReady: isReady && !isCoolingDown,
           lastDonateDate,
+          consentFormPath: uploadedConsentPath,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) {
         setErrorMsg(data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
-      if (consentFile) {
-        const formData = new FormData();
-        formData.append("file", consentFile);
-        const uploadResponse = await fetch("/api/donor/profile/consent", {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        });
-        const uploadData = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          setErrorMsg(`บันทึกข้อมูลแล้ว แต่แนบหนังสือยินยอมไม่สำเร็จ: ${uploadData.error || "กรุณาลองใหม่"}`);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-
-        setConsentFormPath(uploadData.path);
+      if (uploadedConsentPath) {
+        setConsentFormPath(uploadedConsentPath);
         setConsentFile(null);
       }
 
