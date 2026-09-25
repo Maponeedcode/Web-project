@@ -8,6 +8,7 @@ import BloodBadge from "@/components/BloodBadge";
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
+import { PARENT_CONSENT_MESSAGE } from "@/lib/donorEligibility";
 import UrgencyBadge from "@/components/UrgencyBadge";
 import type { BloodRequest } from "@/types/database";
 
@@ -117,6 +118,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [profile, setProfile] = useState<DonorProfile | null>(null);
   const [matchedRequests, setMatchedRequests] = useState<BloodRequest[]>([]);
+  const [canReceiveRequests, setCanReceiveRequests] = useState(false);
   const [activeRequest, setActiveRequest] = useState<ActiveRequest | null>(
     null,
   );
@@ -145,6 +147,7 @@ export default function DashboardPage() {
 
         setUser(data.user as DashboardUser);
         setProfile(data.profile as DonorProfile);
+        setCanReceiveRequests(Boolean(data.canReceiveRequests));
         setMatchedRequests(
           ((data.matchedRequests ?? []) as BloodRequestQueryRow[]).map(
             toBloodRequest,
@@ -199,7 +202,13 @@ export default function DashboardPage() {
   };
 
   const handleReadinessToggle = async () => {
-    if (!profile || recoveryStatus.isCoolingDown || isUpdatingReadiness) return;
+    if (
+      !profile ||
+      !canReceiveRequests ||
+      recoveryStatus.isCoolingDown ||
+      isUpdatingReadiness
+    )
+      return;
 
     setIsUpdatingReadiness(true);
 
@@ -266,33 +275,44 @@ export default function DashboardPage() {
                     type="button"
                     onClick={handleReadinessToggle}
                     disabled={
-                      recoveryStatus.isCoolingDown || isUpdatingReadiness
+                      !canReceiveRequests ||
+                      recoveryStatus.isCoolingDown ||
+                      isUpdatingReadiness
                     }
-                    className={`rounded-2xl border px-4 py-3 ${
+                    aria-pressed={Boolean(
+                      profile?.is_ready && !recoveryStatus.isCoolingDown,
+                    )}
+                    className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left ${
                       profile?.is_ready && !recoveryStatus.isCoolingDown
                         ? "border-emerald-200 bg-emerald-50"
                         : "border-slate-200 bg-slate-50"
                     } ${recoveryStatus.isCoolingDown ? "cursor-not-allowed opacity-70" : "transition hover:border-[#65a1f2]"}`}
                   >
-                    <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                      <span
-                        className={`h-2.5 w-2.5 rounded-full ${
-                          profile?.is_ready && !recoveryStatus.isCoolingDown
-                            ? "bg-emerald-500"
-                            : "bg-slate-400"
-                        }`}
-                      />
-                      {recoveryStatus.isCoolingDown
-                        ? `พักฟื้นอีก ${recoveryStatus.daysRemaining} วัน`
-                        : profile?.is_ready
-                          ? "พร้อมรับแจ้งเตือนด่วน"
-                          : "ปิดรับแจ้งเตือนด่วน"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <span
+                      aria-hidden="true"
+                      className={`relative h-7 w-12 shrink-0 rounded-full ring-1 ring-inset ring-black/10 transition-colors after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-white after:shadow-md after:ring-1 after:ring-black/5 after:transition-transform ${
+                        profile?.is_ready && !recoveryStatus.isCoolingDown
+                          ? "bg-emerald-500 after:translate-x-5"
+                          : "bg-slate-300"
+                      }`}
+                    />
+                    <span>
+                      <span className="block text-sm font-bold text-slate-700">
+                        พร้อมบริจาค
+                      </span>
+                      <span className="mt-0.5 block text-xs text-slate-500">
+                        {recoveryStatus.isCoolingDown
+                          ? `พักฟื้นอีก ${recoveryStatus.daysRemaining} วัน`
+                          : profile?.is_ready
+                            ? "พร้อมรับแจ้งเตือนคำร้องขอบริจาค"
+                            : "ไม่พร้อมรับแจ้งเตือนคำร้องขอบริจาค"}
+                      </span>
+                    </span>
+                    <span className="sr-only">
                       {recoveryStatus.isCoolingDown
                         ? "เว้นระยะอย่างน้อย 90 วันหลังบริจาค"
-                        : "กดเพื่อเปลี่ยนสถานะการรับแจ้งเตือน"}
-                    </p>
+                        : "กดเพื่อเปลี่ยนสถานะพร้อมบริจาค"}
+                    </span>
                   </button>
 
                   <Link
@@ -304,6 +324,18 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </section>
+
+              {!canReceiveRequests && (
+                <div
+                  role="alert"
+                  className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800"
+                >
+                  <p className="flex items-start gap-2 font-bold">
+                    <i className="fa-solid fa-triangle-exclamation mt-0.5" />
+                    <span>{PARENT_CONSENT_MESSAGE}</span>
+                  </p>
+                </div>
+              )}
 
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
@@ -393,12 +425,14 @@ export default function DashboardPage() {
                           เคสกรุ๊ปเลือด {bloodGroup} ในจังหวัดของคุณ
                         </p>
                       </div>
-                      <Link
-                        href="/requests"
-                        className="text-sm font-bold text-[#126fd1] hover:underline"
-                      >
-                        ดูทั้งหมด
-                      </Link>
+                      {canReceiveRequests && (
+                        <Link
+                          href="/requests"
+                          className="text-sm font-bold text-[#126fd1] hover:underline"
+                        >
+                          ดูทั้งหมด
+                        </Link>
+                      )}
                     </div>
 
                     <div className="space-y-3">
