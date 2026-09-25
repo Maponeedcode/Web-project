@@ -7,14 +7,14 @@ import Footer from '@/components/layout/Footer';
 import { basePath, Icon } from '@/components/ui/blood-request';
 
 const items = [
-  { label: 'Dashboard', icon: 'home' as const, href: '/dashboard' },
+  { label: 'Dashboard', icon: 'home' as const },
   { label: 'Blood Request', icon: 'file' as const, href: basePath },
-  { label: 'Notifications', icon: 'bell' as const, href: '/notifications' },
-  { label: 'History', icon: 'clock' as const, href: '/history' },
-  { label: 'Users', icon: 'users' as const, href: '/users' },
-  { label: 'Hospitals', icon: 'hospital' as const, href: '/hospital-management' },
-  { label: 'Reports', icon: 'clock' as const, href: '/reports' },
-  { label: 'Settings', icon: 'clock' as const, href: '/settings' },
+  { label: 'Notifications', icon: 'bell' as const },
+  { label: 'History', icon: 'clock' as const },
+  { label: 'Users', icon: 'users' as const },
+  { label: 'Hospitals', icon: 'hospital' as const },
+  { label: 'Reports', icon: 'clock' as const },
+  { label: 'Settings', icon: 'clock' as const },
 ];
 
 export default function AdminSidebar({ children, userName }: { children: ReactNode; userName: string }) {
@@ -35,7 +35,7 @@ export default function AdminSidebar({ children, userName }: { children: ReactNo
         <div className="min-w-0"><strong className="block break-words text-sm">{userName}</strong><small className="block text-xs text-[#6480a1]">เจ้าหน้าที่โรงพยาบาล</small><small className="text-xs text-emerald-600">● ออนไลน์</small></div>
       </div>
       <nav aria-label="เมนูหลัก" className="space-y-1">{items.map(item => item.href
-        ? <Link key={item.label} className="flex min-h-12 items-center gap-4 rounded-lg px-4 text-sm font-semibold text-[#0e3b6c] hover:bg-slate-100 transition" href={item.href} onClick={() => setOpen(false)}><Icon name={item.icon} />{item.label}</Link>
+        ? <Link key={item.label} className="flex min-h-12 items-center gap-4 rounded-lg border-l-2 border-[#dc2626] bg-[#fde9ed] px-4 text-sm font-semibold text-[#dc2626]" href={item.href} onClick={() => setOpen(false)}><Icon name={item.icon} />{item.label}</Link>
         : <span key={item.label} className="flex min-h-12 items-center gap-4 rounded-lg px-4 text-sm text-[#0e3b6c] opacity-70" aria-disabled="true"><Icon name={item.icon} />{item.label}</span>)}</nav>
       <div className="mt-auto px-3 pt-10">
         <strong className="text-lg leading-7">ทุกหยดเลือด<br />คือโอกาสให้ชีวิต</strong>
