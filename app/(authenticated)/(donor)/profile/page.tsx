@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
+import { evaluateDonorEligibility } from "@/lib/donorEligibility";
 import { THAI_PROVINCES } from "@/lib/thaiProvinces";
 
 const COMMON_CONDITIONS = [
@@ -20,7 +21,6 @@ const COMMON_CONDITIONS = [
 
 const MAX_NOTES_LENGTH = 500;
 const MAX_FILE_SIZE_MB = 5;
-const RECOVERY_DAYS = 90;
 
 const INPUT_CLASS =
   "w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-medium text-[#0e3b6c] placeholder-slate-400 focus:outline-none focus:border-[#65a1f2] focus:bg-white transition";
@@ -52,13 +52,6 @@ const splitNotes = (notes: string) =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-
-const recoveryDaysLeft = (lastDonateDate: string) => {
-  if (!lastDonateDate) return 0;
-  const next = new Date(`${lastDonateDate}T00:00:00`);
-  next.setDate(next.getDate() + RECOVERY_DAYS);
-  return Math.max(0, Math.ceil((next.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-};
 
 function Section({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
@@ -127,8 +120,14 @@ export default function ProfilePage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const daysLeft = recoveryDaysLeft(lastDonateDate);
-  const isCoolingDown = daysLeft > 0;
+  const eligibility = evaluateDonorEligibility({
+    weight: weight ? Number(weight) : null,
+    date_of_birth: dateOfBirth || null,
+    last_donate_date: lastDonateDate || null,
+    is_ready: isReady,
+  });
+  const { isCoolingDown, daysRemaining } = eligibility;
+  const canCheckEligibility = Boolean(dateOfBirth && weight);
   const selectedConditions = splitNotes(medicalNotes);
 
   useEffect(() => {
@@ -477,7 +476,7 @@ export default function ProfilePage() {
                       <p className="text-sm font-bold text-[#0e3b6c]">พร้อมบริจาค</p>
                       <p className="text-xs text-slate-400">
                         {isCoolingDown
-                          ? `อยู่ในระยะพักฟื้นอีก ${daysLeft} วัน (เว้น ${RECOVERY_DAYS} วันหลังบริจาค)`
+                          ? `อยู่ในระยะพักฟื้นอีก ${daysRemaining} วัน (เว้น 90 วันหลังบริจาค)`
                           : "หากเปิด จะได้รับแจ้งเตือนคำร้องขอบริจาคจากผู้ประสานงาน"}
                       </p>
                     </div>
@@ -490,6 +489,30 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+
+                {!canCheckEligibility ? (
+                  <p className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                    <i className="fa-solid fa-circle-info text-slate-400"></i>
+                    กรอกวันเกิดและน้ำหนักเพื่อตรวจสอบเกณฑ์การบริจาค
+                  </p>
+                ) : eligibility.isEligible ? (
+                  <p className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    <i className="fa-solid fa-circle-check"></i>
+                    ผ่านเกณฑ์ พร้อมบริจาคโลหิต
+                  </p>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+                      <i className="fa-solid fa-triangle-exclamation"></i>
+                      ยังไม่สามารถบริจาคได้ในขณะนี้
+                    </p>
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-9 text-xs text-amber-700">
+                      {eligibility.reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </Section>
 
               <div className="grid sm:grid-cols-2 gap-5 items-stretch">
