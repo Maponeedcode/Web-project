@@ -18,6 +18,34 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // ตรวจสอบสถานะการเข้าสู่ระบบค้างไว้หรือไม่
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/check', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            // นำทางตามประเภทผู้ใช้งาน
+            if (data.user.role === 'hospital_admin' || data.user.role === 'system_admin') {
+              router.replace('/admin/dashboard');
+            } else {
+              router.replace('/dashboard');
+            }
+            return;
+          }
+        }
+      } catch {
+        // หากตรวจไม่พบ session หรือเกิดข้อผิดพลาด ให้เข้าสู่หน้าฟอร์มปกติ
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   useEffect(() => {
     if (searchParams.get('registered') === 'true') {
@@ -65,8 +93,18 @@ function LoginForm() {
     }
   };
 
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-[#126fd1] border-t-transparent" />
+        <span className="text-xs font-semibold text-slate-400">กำลังตรวจสอบสถานะการเข้าสู่ระบบ...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-[#ea384c] selection:text-white flex flex-col justify-start sm:justify-center items-center p-4 pt-6 sm:p-6">
+      
       {/* ปุ่มย้อนกลับหน้าหลัก */}
       <div className="w-full max-w-[480px] mb-4">
         <Link
