@@ -555,7 +555,11 @@ export default function ProfilePage() {
       return;
     }
 
-    const submittedValues = currentValues;
+    // Mirror the server: notes are only kept while "มี" is ticked.
+    const submittedValues: FormValues = {
+      ...currentValues,
+      medicalNotes: hasChronicDisease ? medicalNotes.trim() : "",
+    };
 
     setSaving(true);
 
@@ -609,7 +613,7 @@ export default function ProfilePage() {
           weight,
           height,
           hasChronicDisease,
-          medicalNotes,
+          medicalNotes: submittedValues.medicalNotes,
           isReady: isReady && !isCoolingDown,
           lastDonateDate,
           consentFormPath: uploadedConsentPath,
@@ -634,6 +638,7 @@ export default function ProfilePage() {
         setConsentFile(null);
       }
 
+      setMedicalNotes(submittedValues.medicalNotes);
       setSavedSnapshot(JSON.stringify(submittedValues));
       setSuccessMsg("บันทึกข้อมูลโปรไฟล์สำเร็จ");
 
