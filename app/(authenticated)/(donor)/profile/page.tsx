@@ -26,6 +26,7 @@ const COMMON_CONDITIONS = [
 
 const MAX_NOTES_LENGTH = 500;
 const MAX_FILE_SIZE_MB = 5;
+const LEAVE_CONFIRM_MESSAGE = "มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?";
 
 const INPUT_CLASS =
   "w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#0e3b6c] placeholder-slate-400 transition focus:border-[#65a1f2] focus:bg-white focus:outline-none";
@@ -296,15 +297,36 @@ export default function ProfilePage() {
       event.preventDefault();
     };
 
-    window.addEventListener("beforeunload", warnBeforeLeaving);
+    // Client-side <Link> navigation (navbar, sidebar, footer) never fires
+    // beforeunload, so catch those clicks before Next.js handles them.
+    const confirmLinkNavigation = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
-    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+      const link = (event.target as Element | null)?.closest("a[href]");
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" || link.hasAttribute("download")) return;
+
+      const url = new URL(link.href);
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+
+      if (!window.confirm(LEAVE_CONFIRM_MESSAGE)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    window.addEventListener("click", confirmLinkNavigation, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeLeaving);
+      window.removeEventListener("click", confirmLinkNavigation, true);
+    };
   }, [isDirty]);
 
   const handleCancel = () => {
     if (
       isDirty &&
-      !window.confirm("มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?")
+      !window.confirm(LEAVE_CONFIRM_MESSAGE)
     ) {
       return;
     }
