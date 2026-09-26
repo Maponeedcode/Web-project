@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
+import ProvinceSelect from "@/components/profile/ProvinceSelect";
 import {
   calculateAge,
   evaluateDonorEligibility,
 } from "@/lib/donorEligibility";
-import { THAI_PROVINCES } from "@/lib/thaiProvinces";
 import { bangkokToday } from "@/types/database";
 
 const COMMON_CONDITIONS = [
@@ -29,6 +29,9 @@ const MAX_FILE_SIZE_MB = 5;
 const INPUT_CLASS =
   "w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#0e3b6c] placeholder-slate-400 transition focus:border-[#65a1f2] focus:bg-white focus:outline-none";
 
+// iOS Safari gives native date inputs an intrinsic min-width that overflows narrow screens.
+const DATE_INPUT_CLASS = `${INPUT_CLASS} block min-h-11 min-w-0 max-w-full appearance-none [&::-webkit-date-and-time-value]:text-left`;
+
 const LABEL_CLASS =
   "mb-1.5 flex items-center text-xs font-bold text-[#0e3b6c] sm:text-sm";
 
@@ -44,7 +47,6 @@ interface FormValues {
   hasChronicDisease: boolean;
   medicalNotes: string;
   isReady: boolean;
-  urgentNotifications: boolean;
   lastDonateDate: string;
 }
 
@@ -109,6 +111,39 @@ const splitNotes = (notes: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+type BloodTestResult = "PENDING" | "PASSED" | "FAILED";
+
+const BLOOD_TEST_OPTIONS: { value: BloodTestResult; label: string; className: string }[] = [
+  { value: "PENDING", label: "รอผลตรวจ", className: "border-slate-200 bg-slate-50 text-slate-600" },
+  { value: "PASSED", label: "ผ่าน (ผลเลือดปกติ)", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  { value: "FAILED", label: "ไม่ผ่าน", className: "border-red-200 bg-red-50 text-red-700" },
+];
+
+type Relation<T> = T | T[] | null | undefined;
+
+interface DonationRecordRow {
+  record_id: string;
+  donation_date: string | null;
+  volume_ml: number | null;
+  status: string;
+  blood_test_result: string | null;
+  blood_requests?: Relation<{ hospitals?: Relation<{ name: string }> }>;
+}
+
+const firstOf = <T,>(value: Relation<T>) => (Array.isArray(value) ? value[0] : value ?? undefined);
+
+const hospitalNameOf = (record: DonationRecordRow) =>
+  firstOf(firstOf(record.blood_requests)?.hospitals)?.name ?? "ไม่ระบุสถานที่บริจาค";
+
+const formatThaiDate = (date: string | null) =>
+  date
+    ? new Date(`${date.slice(0, 10)}T00:00:00`).toLocaleDateString("th-TH", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "ไม่ระบุวันที่";
+
 function Section({
   icon,
   title,
@@ -119,8 +154,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <h2 className="flex items-center bg-blue-50 px-4 py-3 text-sm font-bold text-[#0e3b6c]">
+    <section className="rounded-2xl border border-slate-200 bg-white">
+      <h2 className="flex items-center rounded-t-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-[#0e3b6c]">
         <i className={`${icon} mr-3 text-slate-700`}></i>
         {title}
       </h2>
@@ -194,12 +229,16 @@ export default function ProfilePage() {
   const [consentFormPath, setConsentFormPath] = useState("");
 
   const [isReady, setIsReady] = useState(true);
-  const [urgentNotifications, setUrgentNotifications] = useState(true);
   const [lastDonateDate, setLastDonateDate] = useState("");
 
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [donations, setDonations] = useState<DonationRecordRow[]>([]);
+  const [bloodTestStatus, setBloodTestStatus] = useState<
+    Record<string, { state: "saving" | "saved" | "error"; message?: string }>
+  >({});
 
   const today = bangkokToday();
 
@@ -210,6 +249,7 @@ export default function ProfilePage() {
     date_of_birth: dateOfBirth || null,
     last_donate_date: lastDonateDate || null,
     is_ready: isReady,
+    consent_form_url: consentFormPath || null,
   });
 
   const { isCoolingDown, daysRemaining } = eligibility;
@@ -232,7 +272,6 @@ export default function ProfilePage() {
     hasChronicDisease,
     medicalNotes,
     isReady,
-    urgentNotifications,
     lastDonateDate,
   };
 
@@ -302,7 +341,6 @@ export default function ProfilePage() {
           hasChronicDisease: Boolean(profile?.has_chronic_disease),
           medicalNotes: profile?.medical_notes ?? "",
           isReady: profile?.is_ready ?? true,
-          urgentNotifications: true,
           lastDonateDate: profile?.last_donate_date ?? "",
         };
 
@@ -317,7 +355,6 @@ export default function ProfilePage() {
         setHasChronicDisease(loaded.hasChronicDisease);
         setMedicalNotes(loaded.medicalNotes);
         setIsReady(loaded.isReady);
-        setUrgentNotifications(loaded.urgentNotifications);
         setLastDonateDate(loaded.lastDonateDate);
         setConsentFormPath(profile?.consent_form_url ?? "");
         setSavedSnapshot(JSON.stringify(loaded));
@@ -334,6 +371,55 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [router]);
+
+  useEffect(() => {
+    const loadDonations = async () => {
+      try {
+        const response = await fetch("/api/donor/history", { credentials: "include" });
+        if (!response.ok) return;
+        const data = await response.json();
+        const records = (data.records ?? []) as DonationRecordRow[];
+        setDonations(records.filter((record) => record.status?.toUpperCase() === "COMPLETED"));
+      } catch {
+        // The blood test section just stays empty if history can't be loaded.
+      }
+    };
+
+    loadDonations();
+  }, []);
+
+  const handleBloodTestChange = async (recordId: string, result: BloodTestResult) => {
+    const previous = donations.find((record) => record.record_id === recordId)?.blood_test_result ?? "PENDING";
+    const setResult = (value: string) =>
+      setDonations((records) =>
+        records.map((record) => (record.record_id === recordId ? { ...record, blood_test_result: value } : record)),
+      );
+
+    setResult(result);
+    setBloodTestStatus((status) => ({ ...status, [recordId]: { state: "saving" } }));
+
+    try {
+      const response = await fetch(`/api/donor/donations/${recordId}/blood-test`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ result }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setBloodTestStatus((status) => ({ ...status, [recordId]: { state: "saved" } }));
+    } catch (error) {
+      setResult(previous);
+      setBloodTestStatus((status) => ({
+        ...status,
+        [recordId]: {
+          state: "error",
+          message: error instanceof Error && error.message ? error.message : "บันทึกไม่สำเร็จ",
+        },
+      }));
+    }
+  };
 
   const toggleCondition = (condition: string) => {
     const items = splitNotes(medicalNotes);
@@ -405,6 +491,13 @@ export default function ProfilePage() {
 
     setErrorMsg("");
     setSuccessMsg("");
+
+    if (!province) {
+      setErrorMsg("กรุณาเลือกจังหวัดที่พำนักปัจจุบัน");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.getElementById("profile-province")?.focus();
+      return;
+    }
 
     if (Number(weight) < 45) {
       setErrorMsg("น้ำหนักต้องไม่ต่ำกว่า 45 กิโลกรัม");
@@ -651,21 +744,12 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <ProvinceSelect
                         id="profile-province"
-                        required
                         value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกจังหวัด</option>
-
-                        {THAI_PROVINCES.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setProvince}
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
                   </div>
                 </Section>
@@ -738,7 +822,7 @@ export default function ProfilePage() {
                         max={today}
                         value={dateOfBirth}
                         onChange={(e) => setDateOfBirth(e.target.value)}
-                        className={INPUT_CLASS}
+                        className={DATE_INPUT_CLASS}
                       />
                     </div>
 
@@ -1009,46 +1093,25 @@ export default function ProfilePage() {
                   icon="fa-regular fa-bell"
                   title="สถานะความพร้อมบริจาค"
                 >
-                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-slate-200">
-                    <div className="flex items-start gap-3 lg:pr-6">
-                      <Toggle
-                        label="พร้อมบริจาค"
-                        checked={isReady && !isCoolingDown}
-                        onChange={setIsReady}
-                        disabled={isCoolingDown}
-                        activeClass="peer-checked:bg-emerald-500"
-                      />
+                  <div className="flex items-start gap-3">
+                    <Toggle
+                      label="พร้อมบริจาค"
+                      checked={isReady && !isCoolingDown}
+                      onChange={setIsReady}
+                      disabled={isCoolingDown}
+                      activeClass="peer-checked:bg-emerald-500"
+                    />
 
-                      <div>
-                        <p className="text-sm font-bold text-[#0e3b6c]">
-                          พร้อมบริจาค
-                        </p>
+                    <div>
+                      <p className="text-sm font-bold text-[#0e3b6c]">
+                        พร้อมบริจาค
+                      </p>
 
-                        <p className="text-xs text-slate-400">
-                          {isCoolingDown
-                            ? `อยู่ในระยะพักฟื้นอีก ${daysRemaining} วัน (เว้น 90 วันหลังบริจาค)`
-                            : "หากเปิด จะได้รับแจ้งเตือนคำร้องขอบริจาคจากผู้ประสานงาน"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 lg:pl-6">
-                      <Toggle
-                        label="เปิดรับการแจ้งเตือนเคสด่วน"
-                        checked={urgentNotifications}
-                        onChange={setUrgentNotifications}
-                        activeClass="peer-checked:bg-blue-600"
-                      />
-
-                      <div>
-                        <p className="text-sm font-bold text-[#0e3b6c]">
-                          เปิดรับการแจ้งเตือนเคสด่วน
-                        </p>
-
-                        <p className="text-xs text-slate-400">
-                          หากเปิด จะได้รับการแจ้งเตือนเคสด่วน
-                        </p>
-                      </div>
+                      <p className="text-xs text-slate-400">
+                        {isCoolingDown
+                          ? `อยู่ในระยะพักฟื้นอีก ${daysRemaining} วัน (เว้น 90 วันหลังบริจาค)`
+                          : "หากเปิด จะได้รับแจ้งเตือนคำร้องขอบริจาคจากผู้ประสานงาน"}
+                      </p>
                     </div>
                   </div>
 
@@ -1090,7 +1153,7 @@ export default function ProfilePage() {
                       max={today}
                       value={lastDonateDate}
                       onChange={(e) => setLastDonateDate(e.target.value)}
-                      className={INPUT_CLASS}
+                      className={DATE_INPUT_CLASS}
                     />
                   </Section>
 
@@ -1103,6 +1166,78 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Blood test results */}
+                <Section icon="fa-solid fa-vial" title="ผลตรวจเลือดจากการบริจาค">
+                  <p className="mb-4 text-xs text-slate-500 sm:text-sm">
+                    เลือกผลตามที่ได้รับแจ้งทาง SMS จากหน่วยรับบริจาค ระบบจะบันทึกให้ทันทีที่เลือก
+                  </p>
+
+                  {donations.length === 0 ? (
+                    <p className="flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                      <i className="fa-solid fa-circle-info text-slate-400"></i>
+                      ยังไม่มีรายการบริจาคที่เสร็จสิ้น
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                      {donations.map((record) => {
+                        const value = (record.blood_test_result ?? "PENDING") as BloodTestResult;
+                        const option = BLOOD_TEST_OPTIONS.find((item) => item.value === value) ?? BLOOD_TEST_OPTIONS[0];
+                        const status = bloodTestStatus[record.record_id];
+                        const selectId = `blood-test-${record.record_id}`;
+
+                        return (
+                          <li
+                            key={record.record_id}
+                            className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="min-w-0">
+                              <label htmlFor={selectId} className="block truncate text-sm font-bold text-[#0e3b6c]">
+                                {formatThaiDate(record.donation_date)} · {hospitalNameOf(record)}
+                              </label>
+                              <p className="text-xs text-slate-400">
+                                {record.volume_ml ? `${record.volume_ml} มล.` : "ไม่ระบุปริมาณ"}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <select
+                                id={selectId}
+                                value={value}
+                                disabled={status?.state === "saving"}
+                                onChange={(e) => handleBloodTestChange(record.record_id, e.target.value as BloodTestResult)}
+                                className={`rounded-xl border-2 px-3 py-2 text-sm font-semibold focus:outline-none focus:border-[#65a1f2] disabled:opacity-60 ${option.className}`}
+                              >
+                                {BLOOD_TEST_OPTIONS.map((item) => (
+                                  <option key={item.value} value={item.value}>
+                                    {item.label}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <span className="w-20 text-xs" aria-live="polite">
+                                {status?.state === "saving" && (
+                                  <span className="text-slate-400">
+                                    <i className="fa-solid fa-circle-notch fa-spin"></i> กำลังบันทึก
+                                  </span>
+                                )}
+                                {status?.state === "saved" && (
+                                  <span className="font-semibold text-emerald-600">
+                                    <i className="fa-solid fa-check"></i> บันทึกแล้ว
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+
+                            {status?.state === "error" && (
+                              <p className="text-xs text-red-600 sm:basis-full">{status.message}</p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Section>
 
                 {/* Buttons */}
                 <div className="flex flex-col-reverse items-stretch justify-center gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:gap-4">
@@ -1141,9 +1276,9 @@ export default function ProfilePage() {
             </form>
           )}
 
-          <div className="mt-10 sm:mt-12">
-                        <Footer />
-                      </div>
+          <div className="mt-16 sm:mt-24">
+            <Footer />
+          </div>
         </div>
       </main>
     </div>
