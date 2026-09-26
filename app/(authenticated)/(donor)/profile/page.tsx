@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DonorNavbar from "@/components/layout/DonorNavbar";
@@ -238,6 +238,7 @@ export default function ProfilePage() {
   const [consentFile, setConsentFile] = useState<File | null>(null);
   const [consentFileError, setConsentFileError] = useState("");
   const [consentFormPath, setConsentFormPath] = useState("");
+  const consentInputRef = useRef<HTMLInputElement>(null);
 
   const [isReady, setIsReady] = useState(true);
   const [lastDonateDate, setLastDonateDate] = useState("");
@@ -636,6 +637,8 @@ export default function ProfilePage() {
       if (uploadedConsentPath) {
         setConsentFormPath(uploadedConsentPath);
         setConsentFile(null);
+        // Reset the input so picking the same file again still fires onChange.
+        if (consentInputRef.current) consentInputRef.current.value = "";
       }
 
       setMedicalNotes(submittedValues.medicalNotes);
@@ -1081,6 +1084,7 @@ export default function ProfilePage() {
                       </div>
 
                       <input
+                        ref={consentInputRef}
                         type="file"
                         accept=".pdf,.jpg,.jpeg"
                         onChange={handleFileChange}
