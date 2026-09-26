@@ -8,6 +8,9 @@ import {
   faClockRotateLeft,
   faBell,
   faBars,
+  faGlobe,
+  faHorse,
+  faChartPie,
   faHouse,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -16,12 +19,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 interface MenuItem {
   label: string;
   href: string;
-  icon: typeof faHouse;
+  icon: typeof faGlobe;
 }
 
 const menuItems: MenuItem[] = [
   {
     label: "หน้าหลัก",
+    href: "/",
+    icon: faGlobe,
+  },
+  {
+    label: "แดชบอร์ด",
     href: "/dashboard",
     icon: faHouse,
   },
@@ -32,7 +40,7 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "การแจ้งเตือน",
-    href: "/requests",
+    href: "/Notifications",
     icon: faBell,
   },
 ];
@@ -103,8 +111,9 @@ export default function DonorSideBar({
             px-6
           "
         >
+          {/* Logo + BloodConnect */}
           <Link
-            href="/dashboard"
+            href="/"
             onClick={onClose}
             className="flex items-center gap-3"
           >
@@ -134,6 +143,7 @@ export default function DonorSideBar({
                 <span className="text-[#0E3B6C]">
                   Blood
                 </span>
+
                 <span className="text-[#DC2626]">
                   Connect
                 </span>
@@ -153,7 +163,7 @@ export default function DonorSideBar({
             </div>
           </Link>
 
-          {/* Mobile Close */}
+          {/* ================= MOBILE CLOSE ================= */}
           <button
             type="button"
             onClick={onClose}
@@ -229,7 +239,7 @@ export default function DonorSideBar({
                     }
                   `}
                 >
-                  {/* Active bar */}
+                  {/* Active Bar */}
                   {isActive && (
                     <span
                       className="
@@ -264,8 +274,8 @@ export default function DonorSideBar({
                   {/* Label */}
                   <span>{item.label}</span>
 
-                  {/* Notification dot */}
-                  {item.href === "/requests" && (
+                  {/* Notification Dot */}
+                  {item.href === "/Notifications" && (
                     <span
                       className="
                         ml-auto
@@ -317,6 +327,7 @@ export default function DonorSideBar({
                 <span className="text-[#0E3B6C]">
                   Blood
                 </span>
+
                 <span className="text-[#DC2626]">
                   Connect
                 </span>

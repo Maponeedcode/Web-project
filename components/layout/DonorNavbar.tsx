@@ -135,10 +135,7 @@ export default function DonorNavbar({
               md:flex
             "
           >
-            <FontAwesomeIcon
-              icon={faBars}
-              className="h-5 w-5"
-            />
+            <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
           </button>
 
           {/* ==================================================
@@ -164,27 +161,20 @@ export default function DonorNavbar({
                 hover:text-[#126fd1]
               "
             >
-              <FontAwesomeIcon
-                icon={faBars}
-                className="h-5 w-5"
-              />
+              <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
             </button>
 
             <Link
-              href="/dashboard"
+              href="/"
               className="
-                text-[18px]
-                font-bold
-                tracking-tight
-              "
+    text-[18px]
+    font-bold
+    tracking-tight
+  "
             >
-              <span className="text-[#0E3B6C]">
-                Blood
-              </span>
+              <span className="text-[#0E3B6C]">Blood</span>
 
-              <span className="text-[#DC2626]">
-                Connect
-              </span>
+              <span className="text-[#DC2626]">Connect</span>
             </Link>
           </div>
 
@@ -206,9 +196,7 @@ export default function DonorNavbar({
                   />
                 }
               >
-                <SearchBar
-                  placeholder="ค้นหาโรงพยาบาล / จังหวัด..."
-                />
+                <SearchBar placeholder="ค้นหาโรงพยาบาล / จังหวัด..." />
               </Suspense>
             </div>
           </div>
@@ -229,7 +217,7 @@ export default function DonorNavbar({
                 Notification
             ================================================== */}
             <Link
-              href="/requests"
+              href="/Notifications"
               aria-label="การแจ้งเตือน"
               className="
                 relative
@@ -245,10 +233,7 @@ export default function DonorNavbar({
                 hover:text-[#126fd1]
               "
             >
-              <FontAwesomeIcon
-                icon={faBell}
-                className="h-[18px] w-[18px]"
-              />
+              <FontAwesomeIcon icon={faBell} className="h-[18px] w-[18px]" />
 
               <span
                 className="
@@ -271,9 +256,7 @@ export default function DonorNavbar({
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
-                  setIsProfileOpen((prev) => !prev)
-                }
+                onClick={() => setIsProfileOpen((prev) => !prev)}
                 aria-label="โปรไฟล์"
                 title="โปรไฟล์"
                 className="
@@ -300,10 +283,7 @@ export default function DonorNavbar({
                     text-white
                   "
                 >
-                  <FontAwesomeIcon
-                    icon={faUser}
-                    className="h-4 w-4"
-                  />
+                  <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                 </div>
 
                 {/* User Information */}
@@ -385,9 +365,7 @@ export default function DonorNavbar({
                   ================================================== */}
                   <Link
                     href="/profile"
-                    onClick={() =>
-                      setIsProfileOpen(false)
-                    }
+                    onClick={() => setIsProfileOpen(false)}
                     className="
                       flex
                       items-center
@@ -473,9 +451,7 @@ export default function DonorNavbar({
             />
           }
         >
-          <SearchBar
-            placeholder="ค้นหาโรงพยาบาล / จังหวัด..."
-          />
+          <SearchBar placeholder="ค้นหาโรงพยาบาล / จังหวัด..." />
         </Suspense>
       </div>
     </>

@@ -350,7 +350,7 @@ export default function DashboardPage() {
                   </button>
 
                   <Link
-                    href="/requests"
+                    href="/Notifications"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e3b6c] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#ea384c]"
                   >
                     <i className="fa-solid fa-bell" />
@@ -476,7 +476,7 @@ export default function DashboardPage() {
                       </div>
 
                       <Link
-                        href="/requests"
+                        href="/Notifications"
                         className="text-sm font-bold text-[#126fd1] hover:underline"
                       >
                         ดูทั้งหมด
@@ -518,7 +518,7 @@ export default function DashboardPage() {
                             </div>
 
                             <Link
-                              href="/requests"
+                              href="/Notifications"
                               className="shrink-0 rounded-xl border border-[#126fd1] px-4 py-2.5 text-center text-sm font-bold text-[#126fd1] transition hover:bg-[#126fd1] hover:text-white"
                             >
                               ดูรายละเอียด

@@ -181,7 +181,7 @@ export default function AdminNavbar({
           </button>
 
           <Link
-            href="/dashboard"
+            href="/"
             className="
               text-[18px]
               font-bold

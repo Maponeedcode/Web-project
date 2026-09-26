@@ -109,7 +109,7 @@ export default function AdminSidebar({
           "
         >
           <Link
-            href="/admin/dashboard"
+            href="/"
             onClick={() => setOpen(false)}
             className="flex items-center gap-3"
           >
