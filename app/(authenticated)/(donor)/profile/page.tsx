@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
-import ProvinceSelect from "@/components/profile/ProvinceSelect";
+import DropdownSelect, { type DropdownOption } from "@/components/profile/DropdownSelect";
+import { THAI_PROVINCES } from "@/lib/thaiProvinces";
 import {
   calculateAge,
   evaluateDonorEligibility,
@@ -25,12 +26,22 @@ const COMMON_CONDITIONS = [
 
 const MAX_NOTES_LENGTH = 500;
 const MAX_FILE_SIZE_MB = 5;
+const LEAVE_CONFIRM_MESSAGE = "มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?";
 
 const INPUT_CLASS =
   "w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#0e3b6c] placeholder-slate-400 transition focus:border-[#65a1f2] focus:bg-white focus:outline-none";
 
 // iOS Safari gives native date inputs an intrinsic min-width that overflows narrow screens.
 const DATE_INPUT_CLASS = `${INPUT_CLASS} block min-h-11 min-w-0 max-w-full appearance-none [&::-webkit-date-and-time-value]:text-left`;
+
+const PROVINCE_OPTIONS: DropdownOption[] = THAI_PROVINCES.map((province) => ({ value: province, label: province }));
+
+const BLOOD_TYPE_OPTIONS: DropdownOption[] = ["A", "B", "AB", "O"].map((type) => ({ value: type, label: type }));
+
+const RH_OPTIONS: DropdownOption[] = [
+  { value: "+", label: "Rh+ (Positive)" },
+  { value: "-", label: "Rh- (Negative)" },
+];
 
 const LABEL_CLASS =
   "mb-1.5 flex items-center text-xs font-bold text-[#0e3b6c] sm:text-sm";
@@ -206,6 +217,8 @@ export default function ProfilePage() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const [account, setAccount] = useState<{
     fullName: string;
@@ -227,6 +240,7 @@ export default function ProfilePage() {
   const [consentFile, setConsentFile] = useState<File | null>(null);
   const [consentFileError, setConsentFileError] = useState("");
   const [consentFormPath, setConsentFormPath] = useState("");
+  const consentInputRef = useRef<HTMLInputElement>(null);
 
   const [isReady, setIsReady] = useState(true);
   const [lastDonateDate, setLastDonateDate] = useState("");
@@ -286,15 +300,36 @@ export default function ProfilePage() {
       event.preventDefault();
     };
 
-    window.addEventListener("beforeunload", warnBeforeLeaving);
+    // Client-side <Link> navigation (navbar, sidebar, footer) never fires
+    // beforeunload, so catch those clicks before Next.js handles them.
+    const confirmLinkNavigation = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
-    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+      const link = (event.target as Element | null)?.closest("a[href]");
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" || link.hasAttribute("download")) return;
+
+      const url = new URL(link.href);
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+
+      if (!window.confirm(LEAVE_CONFIRM_MESSAGE)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    window.addEventListener("click", confirmLinkNavigation, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeLeaving);
+      window.removeEventListener("click", confirmLinkNavigation, true);
+    };
   }, [isDirty]);
 
   const handleCancel = () => {
     if (
       isDirty &&
-      !window.confirm("มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?")
+      !window.confirm(LEAVE_CONFIRM_MESSAGE)
     ) {
       return;
     }
@@ -359,8 +394,10 @@ export default function ProfilePage() {
         setConsentFormPath(profile?.consent_form_url ?? "");
         setSavedSnapshot(JSON.stringify(loaded));
       } catch (error) {
-        setErrorMsg(
-          error instanceof Error
+        setLoadError(
+          error instanceof TypeError
+            ? "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
+            : error instanceof Error && error.message
             ? error.message
             : "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้"
         );
@@ -370,7 +407,13 @@ export default function ProfilePage() {
     };
 
     loadProfile();
-  }, [router]);
+  }, [router, loadAttempt]);
+
+  const retryLoadProfile = () => {
+    setLoadError("");
+    setLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
 
   useEffect(() => {
     const loadDonations = async () => {
@@ -492,10 +535,16 @@ export default function ProfilePage() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!province) {
-      setErrorMsg("กรุณาเลือกจังหวัดที่พำนักปัจจุบัน");
+    const missingChoice = [
+      { value: province, id: "profile-province", message: "กรุณาเลือกจังหวัดที่พำนักปัจจุบัน" },
+      { value: bloodType, id: "profile-blood-type", message: "กรุณาเลือกหมู่โลหิตหลัก (ABO)" },
+      { value: rh, id: "profile-rh", message: "กรุณาเลือกหมู่โลหิตย่อย (Rh Factor)" },
+    ].find((field) => !field.value);
+
+    if (missingChoice) {
+      setErrorMsg(missingChoice.message);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      document.getElementById("profile-province")?.focus();
+      document.getElementById(missingChoice.id)?.focus();
       return;
     }
 
@@ -517,7 +566,11 @@ export default function ProfilePage() {
       return;
     }
 
-    const submittedValues = currentValues;
+    // Mirror the server: notes are only kept while "มี" is ticked.
+    const submittedValues: FormValues = {
+      ...currentValues,
+      medicalNotes: hasChronicDisease ? medicalNotes.trim() : "",
+    };
 
     setSaving(true);
 
@@ -571,7 +624,7 @@ export default function ProfilePage() {
           weight,
           height,
           hasChronicDisease,
-          medicalNotes,
+          medicalNotes: submittedValues.medicalNotes,
           isReady: isReady && !isCoolingDown,
           lastDonateDate,
           consentFormPath: uploadedConsentPath,
@@ -594,8 +647,11 @@ export default function ProfilePage() {
       if (uploadedConsentPath) {
         setConsentFormPath(uploadedConsentPath);
         setConsentFile(null);
+        // Reset the input so picking the same file again still fires onChange.
+        if (consentInputRef.current) consentInputRef.current.value = "";
       }
 
+      setMedicalNotes(submittedValues.medicalNotes);
       setSavedSnapshot(JSON.stringify(submittedValues));
       setSuccessMsg("บันทึกข้อมูลโปรไฟล์สำเร็จ");
 
@@ -634,6 +690,21 @@ export default function ProfilePage() {
           {loading ? (
             <div className="py-16 text-center text-sm text-slate-500">
               กำลังโหลดข้อมูลโปรไฟล์...
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center gap-4 rounded-3xl border border-red-200 bg-red-50 px-5 py-12 text-center">
+              <i className="fa-solid fa-circle-exclamation text-3xl text-[#dc2626]"></i>
+
+              <p className="text-sm font-semibold text-[#dc2626]">{loadError}</p>
+
+              <button
+                type="button"
+                onClick={retryLoadProfile}
+                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+              >
+                <i className="fa-solid fa-rotate-right"></i>
+                ลองใหม่อีกครั้ง
+              </button>
             </div>
           ) : (
             <form
@@ -744,11 +815,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <ProvinceSelect
+                      <DropdownSelect
                         id="profile-province"
                         value={province}
                         onChange={setProvince}
+                        options={PROVINCE_OPTIONS}
+                        placeholder="เลือกจังหวัด"
+                        listLabel="จังหวัด"
                         buttonClassName={INPUT_CLASS}
+                        searchable
                       />
                     </div>
                   </div>
@@ -769,21 +844,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <DropdownSelect
                         id="profile-blood-type"
-                        required
                         value={bloodType}
-                        onChange={(e) => setBloodType(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกหมู่โลหิตหลัก</option>
-
-                        {["A", "B", "AB", "O"].map((g) => (
-                          <option key={g} value={g}>
-                            {g}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setBloodType}
+                        options={BLOOD_TYPE_OPTIONS}
+                        placeholder="เลือกหมู่โลหิตหลัก"
+                        listLabel="หมู่โลหิตหลัก"
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
 
                     <div>
@@ -792,17 +861,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <DropdownSelect
                         id="profile-rh"
-                        required
                         value={rh}
-                        onChange={(e) => setRh(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกหมู่โลหิตย่อย</option>
-                        <option value="+">Rh+ (Positive)</option>
-                        <option value="-">Rh- (Negative)</option>
-                      </select>
+                        onChange={setRh}
+                        options={RH_OPTIONS}
+                        placeholder="เลือกหมู่โลหิตย่อย"
+                        listLabel="หมู่โลหิตย่อย"
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
 
                     <div>
@@ -1042,6 +1109,7 @@ export default function ProfilePage() {
                       </div>
 
                       <input
+                        ref={consentInputRef}
                         type="file"
                         accept=".pdf,.jpg,.jpeg"
                         onChange={handleFileChange}
@@ -1114,6 +1182,13 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
+
+                  {!isCoolingDown && !isReady && lastDonateDate && (
+                    <p className="mt-4 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700 sm:text-sm">
+                      <i className="fa-solid fa-bell"></i>
+                      พ้นระยะพักฟื้นแล้ว เปิด &quot;พร้อมบริจาค&quot; แล้วกดบันทึก เพื่อรับแจ้งเตือนคำร้องขอบริจาคอีกครั้ง
+                    </p>
+                  )}
 
                   {!canCheckEligibility ? (
                     <p className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
@@ -1200,22 +1275,23 @@ export default function ProfilePage() {
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                              <select
-                                id={selectId}
-                                value={value}
-                                disabled={status?.state === "saving"}
-                                onChange={(e) => handleBloodTestChange(record.record_id, e.target.value as BloodTestResult)}
-                                className={`rounded-xl border-2 px-3 py-2 text-sm font-semibold focus:outline-none focus:border-[#65a1f2] disabled:opacity-60 ${option.className}`}
-                              >
-                                {BLOOD_TEST_OPTIONS.map((item) => (
-                                  <option key={item.value} value={item.value}>
-                                    {item.label}
-                                  </option>
-                                ))}
-                              </select>
+                            <div className="flex w-full items-center gap-3 sm:w-auto">
+                              <div className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                                <DropdownSelect
+                                  id={selectId}
+                                  value={value}
+                                  disabled={status?.state === "saving"}
+                                  onChange={(next) => {
+                                    if (next !== value) handleBloodTestChange(record.record_id, next as BloodTestResult);
+                                  }}
+                                  options={BLOOD_TEST_OPTIONS}
+                                  placeholder="เลือกผลตรวจ"
+                                  listLabel="ผลตรวจเลือด"
+                                  buttonClassName={`w-full rounded-xl border-2 px-3 py-2 text-sm font-semibold focus:border-[#65a1f2] focus:outline-none ${option.className}`}
+                                />
+                              </div>
 
-                              <span className="w-20 text-xs" aria-live="polite">
+                              <span className="w-20 shrink-0 text-xs" aria-live="polite">
                                 {status?.state === "saving" && (
                                   <span className="text-slate-400">
                                     <i className="fa-solid fa-circle-notch fa-spin"></i> กำลังบันทึก
