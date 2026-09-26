@@ -16,6 +16,7 @@ interface DropdownSelectProps {
   listLabel: string;
   buttonClassName: string;
   searchable?: boolean;
+  disabled?: boolean;
 }
 
 // A custom listbox so the list always opens below the field; native <select>
@@ -29,6 +30,7 @@ export default function DropdownSelect({
   listLabel,
   buttonClassName,
   searchable = false,
+  disabled = false,
 }: DropdownSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -107,13 +109,14 @@ export default function DropdownSelect({
         ref={buttonRef}
         id={id}
         type="button"
+        disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
         aria-activedescendant={open && !searchable && visibleOptions[activeIndex] ? optionId(activeIndex) : undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={searchable ? undefined : handleKeyDown}
-        className={`${buttonClassName} flex items-center justify-between text-left`}
+        className={`${buttonClassName} flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-60`}
       >
         <span className={selected ? "" : "text-slate-400"}>{selected?.label ?? placeholder}</span>
         <i className={`fa-solid fa-chevron-down text-xs text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}></i>

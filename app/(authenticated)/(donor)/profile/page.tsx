@@ -1239,22 +1239,23 @@ export default function ProfilePage() {
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                              <select
-                                id={selectId}
-                                value={value}
-                                disabled={status?.state === "saving"}
-                                onChange={(e) => handleBloodTestChange(record.record_id, e.target.value as BloodTestResult)}
-                                className={`rounded-xl border-2 px-3 py-2 text-sm font-semibold focus:outline-none focus:border-[#65a1f2] disabled:opacity-60 ${option.className}`}
-                              >
-                                {BLOOD_TEST_OPTIONS.map((item) => (
-                                  <option key={item.value} value={item.value}>
-                                    {item.label}
-                                  </option>
-                                ))}
-                              </select>
+                            <div className="flex w-full items-center gap-3 sm:w-auto">
+                              <div className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+                                <DropdownSelect
+                                  id={selectId}
+                                  value={value}
+                                  disabled={status?.state === "saving"}
+                                  onChange={(next) => {
+                                    if (next !== value) handleBloodTestChange(record.record_id, next as BloodTestResult);
+                                  }}
+                                  options={BLOOD_TEST_OPTIONS}
+                                  placeholder="เลือกผลตรวจ"
+                                  listLabel="ผลตรวจเลือด"
+                                  buttonClassName={`w-full rounded-xl border-2 px-3 py-2 text-sm font-semibold focus:border-[#65a1f2] focus:outline-none ${option.className}`}
+                                />
+                              </div>
 
-                              <span className="w-20 text-xs" aria-live="polite">
+                              <span className="w-20 shrink-0 text-xs" aria-live="polite">
                                 {status?.state === "saving" && (
                                   <span className="text-slate-400">
                                     <i className="fa-solid fa-circle-notch fa-spin"></i> กำลังบันทึก
