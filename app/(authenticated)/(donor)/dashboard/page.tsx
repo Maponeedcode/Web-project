@@ -74,7 +74,7 @@ const formatDate = (date: string) =>
   });
 
 const getRecoveryStatus = (
-  lastDonationDate?: string | null
+  lastDonationDate?: string | null,
 ): RecoveryStatus => {
   if (!lastDonationDate) {
     return {
@@ -92,9 +92,7 @@ const getRecoveryStatus = (
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysRemaining = Math.max(
     0,
-    Math.ceil(
-      (nextDonationDate.getTime() - Date.now()) / millisecondsPerDay
-    )
+    Math.ceil((nextDonationDate.getTime() - Date.now()) / millisecondsPerDay),
   );
 
   const daysElapsed = Math.max(0, 90 - daysRemaining);
@@ -111,7 +109,7 @@ const toBloodRequest = (request: BloodRequestQueryRow): BloodRequest => ({
   ...request,
   hospitals: Array.isArray(request.hospitals)
     ? request.hospitals[0]
-    : request.hospitals ?? undefined,
+    : (request.hospitals ?? undefined),
   donation_records: request.donation_records ?? undefined,
 });
 
@@ -124,7 +122,7 @@ export default function DashboardPage() {
   const [matchedRequests, setMatchedRequests] = useState<BloodRequest[]>([]);
   const [canReceiveRequests, setCanReceiveRequests] = useState(false);
   const [activeRequest, setActiveRequest] = useState<ActiveRequest | null>(
-    null
+    null,
   );
   const [isUpdatingReadiness, setIsUpdatingReadiness] = useState(false);
   const [isCancellingMission, setIsCancellingMission] = useState(false);
@@ -154,16 +152,16 @@ export default function DashboardPage() {
 
         setMatchedRequests(
           ((data.matchedRequests ?? []) as BloodRequestQueryRow[]).map(
-            toBloodRequest
-          )
+            toBloodRequest,
+          ),
         );
 
         setActiveRequest(
           data.activeRequest
             ? (toBloodRequest(
-                data.activeRequest as BloodRequestQueryRow
+                data.activeRequest as BloodRequestQueryRow,
               ) as ActiveRequest)
-            : null
+            : null,
         );
       } catch (error) {
         console.error("Unable to load dashboard:", error);
@@ -192,7 +190,7 @@ export default function DashboardPage() {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       const data = await response.json();
@@ -206,9 +204,7 @@ export default function DashboardPage() {
       console.error("Unable to cancel donation:", error);
 
       setMissionError(
-        error instanceof Error
-          ? error.message
-          : "ไม่สามารถยกเลิกภารกิจได้"
+        error instanceof Error ? error.message : "ไม่สามารถยกเลิกภารกิจได้",
       );
     } finally {
       setIsCancellingMission(false);
@@ -338,15 +334,15 @@ export default function DashboardPage() {
                       {recoveryStatus.isCoolingDown
                         ? `พักฟื้นอีก ${recoveryStatus.daysRemaining} วัน`
                         : profile?.is_ready
-                        ? "พร้อมรับแจ้งเตือนด่วน"
-                        : "ปิดรับแจ้งเตือนด่วน"}
+                          ? "พร้อมรับแจ้งเตือนด่วน"
+                          : "ปิดรับแจ้งเตือนด่วน"}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-500">
                       {recoveryStatus.isCoolingDown
                         ? "เว้นระยะอย่างน้อย 90 วันหลังบริจาค"
                         : "กดเพื่อเปลี่ยนสถานะพร้อมบริจาค"}
-                    </span>
+                    </p>
                   </button>
 
                   <Link
@@ -384,9 +380,7 @@ export default function DashboardPage() {
                     {activeRequest ? (
                       <div className="p-5 sm:p-6">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                          <UrgencyBadge
-                            urgency={activeRequest.urgency_level}
-                          />
+                          <UrgencyBadge urgency={activeRequest.urgency_level} />
 
                           <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
                             ตอบรับแล้ว
@@ -540,8 +534,8 @@ export default function DashboardPage() {
                       recoveryStatus.isCoolingDown
                         ? "bg-amber-50 text-amber-500"
                         : profile?.is_ready
-                        ? "bg-emerald-50 text-emerald-600"
-                        : "bg-slate-100 text-slate-500"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     <i
@@ -549,8 +543,8 @@ export default function DashboardPage() {
                         recoveryStatus.isCoolingDown
                           ? "fa-hourglass-half"
                           : profile?.is_ready
-                          ? "fa-circle-check"
-                          : "fa-circle-pause"
+                            ? "fa-circle-check"
+                            : "fa-circle-pause"
                       } text-2xl`}
                     />
                   </div>
@@ -559,8 +553,8 @@ export default function DashboardPage() {
                     {recoveryStatus.isCoolingDown
                       ? "อยู่ในระยะพักฟื้นร่างกาย"
                       : profile?.is_ready
-                      ? "คุณพร้อมช่วยเหลือแล้ว"
-                      : "สถานะการรับแจ้งเตือนถูกปิด"}
+                        ? "คุณพร้อมช่วยเหลือแล้ว"
+                        : "สถานะการรับแจ้งเตือนถูกปิด"}
                   </h2>
 
                   <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -568,13 +562,13 @@ export default function DashboardPage() {
                       ? `เพื่อสุขภาพที่ดีของคุณ กรุณาเว้นระยะ 90 วัน (พร้อมอีกครั้ง ${
                           recoveryStatus.nextDonationDate
                             ? formatDate(
-                                recoveryStatus.nextDonationDate.toISOString()
+                                recoveryStatus.nextDonationDate.toISOString(),
                               )
                             : "-"
                         })`
                       : profile?.is_ready
-                      ? "คุณจะเห็นเคสเปิดที่ตรงกับกรุ๊ปเลือดและจังหวัดของคุณ"
-                      : "เปิดการรับแจ้งเตือนจากหน้าโปรไฟล์ เมื่อคุณพร้อมรับเคสใหม่"}
+                        ? "คุณจะเห็นเคสเปิดที่ตรงกับกรุ๊ปเลือดและจังหวัดของคุณ"
+                        : "เปิดการรับแจ้งเตือนจากหน้าโปรไฟล์ เมื่อคุณพร้อมรับเคสใหม่"}
                   </p>
 
                   {recoveryStatus.isCoolingDown && (
