@@ -279,7 +279,7 @@ export default function RequestList({ requests }: { requests: RequestView[] }) {
                   <td className="px-3 py-3">
                     <Badge
                       color={
-                        statusColor(request.status) as
+                        statusColor(request.status, displayedRequestStatus(request) === "EXPIRED") as
                           | "red"
                           | "orange"
                           | "blue"
@@ -287,9 +287,7 @@ export default function RequestList({ requests }: { requests: RequestView[] }) {
                           | "gray"
                       }
                     >
-                      {statusLabels[
-                        request.status as keyof typeof statusLabels
-                      ] ?? request.status}
+                      {statusLabels[displayedRequestStatus(request)]}
                     </Badge>
                   </td>
                   <td className="px-3 py-3">
