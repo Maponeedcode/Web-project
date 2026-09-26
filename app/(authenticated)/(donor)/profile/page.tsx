@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
-import ProvinceSelect from "@/components/profile/ProvinceSelect";
+import DropdownSelect, { type DropdownOption } from "@/components/profile/DropdownSelect";
+import { THAI_PROVINCES } from "@/lib/thaiProvinces";
 import {
   calculateAge,
   evaluateDonorEligibility,
@@ -31,6 +32,15 @@ const INPUT_CLASS =
 
 // iOS Safari gives native date inputs an intrinsic min-width that overflows narrow screens.
 const DATE_INPUT_CLASS = `${INPUT_CLASS} block min-h-11 min-w-0 max-w-full appearance-none [&::-webkit-date-and-time-value]:text-left`;
+
+const PROVINCE_OPTIONS: DropdownOption[] = THAI_PROVINCES.map((province) => ({ value: province, label: province }));
+
+const BLOOD_TYPE_OPTIONS: DropdownOption[] = ["A", "B", "AB", "O"].map((type) => ({ value: type, label: type }));
+
+const RH_OPTIONS: DropdownOption[] = [
+  { value: "+", label: "Rh+ (Positive)" },
+  { value: "-", label: "Rh- (Negative)" },
+];
 
 const LABEL_CLASS =
   "mb-1.5 flex items-center text-xs font-bold text-[#0e3b6c] sm:text-sm";
@@ -492,10 +502,16 @@ export default function ProfilePage() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!province) {
-      setErrorMsg("กรุณาเลือกจังหวัดที่พำนักปัจจุบัน");
+    const missingChoice = [
+      { value: province, id: "profile-province", message: "กรุณาเลือกจังหวัดที่พำนักปัจจุบัน" },
+      { value: bloodType, id: "profile-blood-type", message: "กรุณาเลือกหมู่โลหิตหลัก (ABO)" },
+      { value: rh, id: "profile-rh", message: "กรุณาเลือกหมู่โลหิตย่อย (Rh Factor)" },
+    ].find((field) => !field.value);
+
+    if (missingChoice) {
+      setErrorMsg(missingChoice.message);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      document.getElementById("profile-province")?.focus();
+      document.getElementById(missingChoice.id)?.focus();
       return;
     }
 
@@ -744,11 +760,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <ProvinceSelect
+                      <DropdownSelect
                         id="profile-province"
                         value={province}
                         onChange={setProvince}
+                        options={PROVINCE_OPTIONS}
+                        placeholder="เลือกจังหวัด"
+                        listLabel="จังหวัด"
                         buttonClassName={INPUT_CLASS}
+                        searchable
                       />
                     </div>
                   </div>
@@ -769,21 +789,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <DropdownSelect
                         id="profile-blood-type"
-                        required
                         value={bloodType}
-                        onChange={(e) => setBloodType(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกหมู่โลหิตหลัก</option>
-
-                        {["A", "B", "AB", "O"].map((g) => (
-                          <option key={g} value={g}>
-                            {g}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setBloodType}
+                        options={BLOOD_TYPE_OPTIONS}
+                        placeholder="เลือกหมู่โลหิตหลัก"
+                        listLabel="หมู่โลหิตหลัก"
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
 
                     <div>
@@ -792,17 +806,15 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <DropdownSelect
                         id="profile-rh"
-                        required
                         value={rh}
-                        onChange={(e) => setRh(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกหมู่โลหิตย่อย</option>
-                        <option value="+">Rh+ (Positive)</option>
-                        <option value="-">Rh- (Negative)</option>
-                      </select>
+                        onChange={setRh}
+                        options={RH_OPTIONS}
+                        placeholder="เลือกหมู่โลหิตย่อย"
+                        listLabel="หมู่โลหิตย่อย"
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
 
                     <div>
