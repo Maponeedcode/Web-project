@@ -29,6 +29,9 @@ const MAX_FILE_SIZE_MB = 5;
 const INPUT_CLASS =
   "w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#0e3b6c] placeholder-slate-400 transition focus:border-[#65a1f2] focus:bg-white focus:outline-none";
 
+// iOS Safari gives native date inputs an intrinsic min-width that overflows narrow screens.
+const DATE_INPUT_CLASS = `${INPUT_CLASS} block min-h-11 min-w-0 max-w-full appearance-none [&::-webkit-date-and-time-value]:text-left`;
+
 const LABEL_CLASS =
   "mb-1.5 flex items-center text-xs font-bold text-[#0e3b6c] sm:text-sm";
 
@@ -821,7 +824,7 @@ export default function ProfilePage() {
                         max={today}
                         value={dateOfBirth}
                         onChange={(e) => setDateOfBirth(e.target.value)}
-                        className={INPUT_CLASS}
+                        className={DATE_INPUT_CLASS}
                       />
                     </div>
 
@@ -1152,7 +1155,7 @@ export default function ProfilePage() {
                       max={today}
                       value={lastDonateDate}
                       onChange={(e) => setLastDonateDate(e.target.value)}
-                      className={INPUT_CLASS}
+                      className={DATE_INPUT_CLASS}
                     />
                   </Section>
 
