@@ -1183,6 +1183,13 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
+                  {!isCoolingDown && !isReady && lastDonateDate && (
+                    <p className="mt-4 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700 sm:text-sm">
+                      <i className="fa-solid fa-bell"></i>
+                      พ้นระยะพักฟื้นแล้ว เปิด &quot;พร้อมบริจาค&quot; แล้วกดบันทึก เพื่อรับแจ้งเตือนคำร้องขอบริจาคอีกครั้ง
+                    </p>
+                  )}
+
                   {!canCheckEligibility ? (
                     <p className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
                       <i className="fa-solid fa-circle-info text-slate-400"></i>
