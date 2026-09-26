@@ -210,6 +210,7 @@ export default function ProfilePage() {
     date_of_birth: dateOfBirth || null,
     last_donate_date: lastDonateDate || null,
     is_ready: isReady,
+    consent_form_url: consentFormPath || null,
   });
 
   const { isCoolingDown, daysRemaining } = eligibility;
