@@ -1275,9 +1275,9 @@ export default function ProfilePage() {
             </form>
           )}
 
-          <div className="mt-10 sm:mt-12">
-                        <Footer />
-                      </div>
+          <div className="mt-16 sm:mt-24">
+            <Footer />
+          </div>
         </div>
       </main>
     </div>
