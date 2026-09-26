@@ -10,6 +10,8 @@ import {
   faFileLines,
   faHospital,
   faBars,
+  faHandHoldingMedical,
+  faGlobe
 } from "@fortawesome/free-solid-svg-icons";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -20,6 +22,11 @@ import Footer from "@/components/layout/Footer";
 const menuItems = [
   {
     label: "หน้าหลัก",
+    href: "/",
+    icon: faGlobe,
+  },
+  {
+    label: "เเดชบอร์ด",
     href: "/admin/dashboard",
     icon: faHouse,
   },
@@ -32,6 +39,11 @@ const menuItems = [
     label: "โรงพยาบาล",
     href: "/admin/hospital",
     icon: faHospital,
+  },
+  {
+    label: "จัดการบริจาคเลือด",
+    href: "/admin/donations",
+    icon: faHandHoldingMedical,
   },
 ];
 
