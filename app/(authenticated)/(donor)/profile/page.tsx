@@ -44,7 +44,6 @@ interface FormValues {
   hasChronicDisease: boolean;
   medicalNotes: string;
   isReady: boolean;
-  urgentNotifications: boolean;
   lastDonateDate: string;
 }
 
@@ -227,7 +226,6 @@ export default function ProfilePage() {
   const [consentFormPath, setConsentFormPath] = useState("");
 
   const [isReady, setIsReady] = useState(true);
-  const [urgentNotifications, setUrgentNotifications] = useState(true);
   const [lastDonateDate, setLastDonateDate] = useState("");
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -271,7 +269,6 @@ export default function ProfilePage() {
     hasChronicDisease,
     medicalNotes,
     isReady,
-    urgentNotifications,
     lastDonateDate,
   };
 
@@ -341,7 +338,6 @@ export default function ProfilePage() {
           hasChronicDisease: Boolean(profile?.has_chronic_disease),
           medicalNotes: profile?.medical_notes ?? "",
           isReady: profile?.is_ready ?? true,
-          urgentNotifications: true,
           lastDonateDate: profile?.last_donate_date ?? "",
         };
 
@@ -356,7 +352,6 @@ export default function ProfilePage() {
         setHasChronicDisease(loaded.hasChronicDisease);
         setMedicalNotes(loaded.medicalNotes);
         setIsReady(loaded.isReady);
-        setUrgentNotifications(loaded.urgentNotifications);
         setLastDonateDate(loaded.lastDonateDate);
         setConsentFormPath(profile?.consent_form_url ?? "");
         setSavedSnapshot(JSON.stringify(loaded));
@@ -1097,46 +1092,25 @@ export default function ProfilePage() {
                   icon="fa-regular fa-bell"
                   title="สถานะความพร้อมบริจาค"
                 >
-                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-slate-200">
-                    <div className="flex items-start gap-3 lg:pr-6">
-                      <Toggle
-                        label="พร้อมบริจาค"
-                        checked={isReady && !isCoolingDown}
-                        onChange={setIsReady}
-                        disabled={isCoolingDown}
-                        activeClass="peer-checked:bg-emerald-500"
-                      />
+                  <div className="flex items-start gap-3">
+                    <Toggle
+                      label="พร้อมบริจาค"
+                      checked={isReady && !isCoolingDown}
+                      onChange={setIsReady}
+                      disabled={isCoolingDown}
+                      activeClass="peer-checked:bg-emerald-500"
+                    />
 
-                      <div>
-                        <p className="text-sm font-bold text-[#0e3b6c]">
-                          พร้อมบริจาค
-                        </p>
+                    <div>
+                      <p className="text-sm font-bold text-[#0e3b6c]">
+                        พร้อมบริจาค
+                      </p>
 
-                        <p className="text-xs text-slate-400">
-                          {isCoolingDown
-                            ? `อยู่ในระยะพักฟื้นอีก ${daysRemaining} วัน (เว้น 90 วันหลังบริจาค)`
-                            : "หากเปิด จะได้รับแจ้งเตือนคำร้องขอบริจาคจากผู้ประสานงาน"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 lg:pl-6">
-                      <Toggle
-                        label="เปิดรับการแจ้งเตือนเคสด่วน"
-                        checked={urgentNotifications}
-                        onChange={setUrgentNotifications}
-                        activeClass="peer-checked:bg-blue-600"
-                      />
-
-                      <div>
-                        <p className="text-sm font-bold text-[#0e3b6c]">
-                          เปิดรับการแจ้งเตือนเคสด่วน
-                        </p>
-
-                        <p className="text-xs text-slate-400">
-                          หากเปิด จะได้รับการแจ้งเตือนเคสด่วน
-                        </p>
-                      </div>
+                      <p className="text-xs text-slate-400">
+                        {isCoolingDown
+                          ? `อยู่ในระยะพักฟื้นอีก ${daysRemaining} วัน (เว้น 90 วันหลังบริจาค)`
+                          : "หากเปิด จะได้รับแจ้งเตือนคำร้องขอบริจาคจากผู้ประสานงาน"}
+                      </p>
                     </div>
                   </div>
 
