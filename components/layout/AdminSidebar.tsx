@@ -30,7 +30,7 @@ const menuItems = [
   },
   {
     label: "โรงพยาบาล",
-    href: "/hospitals",
+    href: "/admin/hospital",
     icon: faHospital,
   },
 ];

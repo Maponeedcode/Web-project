@@ -1141,7 +1141,9 @@ export default function ProfilePage() {
             </form>
           )}
 
-          <Footer />
+          <div className="mt-10 sm:mt-12">
+                        <Footer />
+                      </div>
         </div>
       </main>
     </div>

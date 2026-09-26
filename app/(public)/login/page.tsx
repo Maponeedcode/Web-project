@@ -20,6 +20,26 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
+  // ฟังก์ชันช่วยนำทางตาม Role และสถานะ Donor Profile
+  const handleUserNavigation = (user: any, hasProfile?: boolean, replace = false) => {
+    let targetUrl = '/dashboard';
+
+    if (user?.role === 'hospital_admin' || user?.role === 'system_admin') {
+      targetUrl = '/admin/dashboard';
+    } else if (hasProfile === false || user?.has_profile === false) {
+      // หากเป็นผู้ใช้ทั่วไปแต่ยังไม่มี Donor Profile ให้เด้งไปหน้า profile ทันที
+      targetUrl = '/profile';
+    } else {
+      targetUrl = '/dashboard';
+    }
+
+    if (replace) {
+      router.replace(targetUrl);
+    } else {
+      router.push(targetUrl);
+    }
+  };
+
   // ตรวจสอบสถานะการเข้าสู่ระบบค้างไว้หรือไม่
   useEffect(() => {
     const checkSession = async () => {
@@ -28,12 +48,9 @@ function LoginForm() {
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
-            // นำทางตามประเภทผู้ใช้งาน
-            if (data.user.role === 'hospital_admin' || data.user.role === 'system_admin') {
-              router.replace('/admin/dashboard');
-            } else {
-              router.replace('/dashboard');
-            }
+            // นำทางตามประเภทผู้ใช้งาน และเช็ค Donor Profile
+            const hasProfile = data.has_profile ?? data.user.has_profile;
+            handleUserNavigation(data.user, hasProfile, true);
             return;
           }
         }
@@ -80,12 +97,9 @@ function LoginForm() {
         return;
       }
 
-      // นำทางตามประเภทผู้ใช้งาน
-      if (data.user?.role === 'hospital_admin' || data.user?.role === 'system_admin') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      // นำทางตามประเภทผู้ใช้ และเช็คว่ามี Donor Profile
+      const hasProfile = data.has_profile ?? data.user?.has_profile;
+      handleUserNavigation(data.user, hasProfile, false);
       router.refresh();
     } catch {
       setErrorMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');

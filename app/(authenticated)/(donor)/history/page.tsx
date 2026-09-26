@@ -651,7 +651,9 @@ function HistoryContent() {
               </>
             )}
 
-            <Footer />
+            <div className="mt-10 sm:mt-12">
+                          <Footer />
+                        </div>
           </div>
         </div>
       </main>
