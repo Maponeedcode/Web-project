@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import DonorNavbar from "@/components/layout/DonorNavbar";
 import DonorSideBar from "@/components/layout/DonorSideBar";
 import Footer from "@/components/layout/Footer";
+import ProvinceSelect from "@/components/profile/ProvinceSelect";
 import {
   calculateAge,
   evaluateDonorEligibility,
 } from "@/lib/donorEligibility";
-import { THAI_PROVINCES } from "@/lib/thaiProvinces";
 import { bangkokToday } from "@/types/database";
 
 const COMMON_CONDITIONS = [
@@ -154,8 +154,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <h2 className="flex items-center bg-blue-50 px-4 py-3 text-sm font-bold text-[#0e3b6c]">
+    <section className="rounded-2xl border border-slate-200 bg-white">
+      <h2 className="flex items-center rounded-t-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-[#0e3b6c]">
         <i className={`${icon} mr-3 text-slate-700`}></i>
         {title}
       </h2>
@@ -492,6 +492,13 @@ export default function ProfilePage() {
     setErrorMsg("");
     setSuccessMsg("");
 
+    if (!province) {
+      setErrorMsg("กรุณาเลือกจังหวัดที่พำนักปัจจุบัน");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.getElementById("profile-province")?.focus();
+      return;
+    }
+
     if (Number(weight) < 45) {
       setErrorMsg("น้ำหนักต้องไม่ต่ำกว่า 45 กิโลกรัม");
       return;
@@ -737,21 +744,12 @@ export default function ProfilePage() {
                         <span className="ml-1 text-red-500">*</span>
                       </label>
 
-                      <select
+                      <ProvinceSelect
                         id="profile-province"
-                        required
                         value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="">เลือกจังหวัด</option>
-
-                        {THAI_PROVINCES.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setProvince}
+                        buttonClassName={INPUT_CLASS}
+                      />
                     </div>
                   </div>
                 </Section>
