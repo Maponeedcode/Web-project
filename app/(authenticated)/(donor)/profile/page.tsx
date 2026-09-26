@@ -217,6 +217,8 @@ export default function ProfilePage() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const [account, setAccount] = useState<{
     fullName: string;
@@ -392,8 +394,10 @@ export default function ProfilePage() {
         setConsentFormPath(profile?.consent_form_url ?? "");
         setSavedSnapshot(JSON.stringify(loaded));
       } catch (error) {
-        setErrorMsg(
-          error instanceof Error
+        setLoadError(
+          error instanceof TypeError
+            ? "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
+            : error instanceof Error && error.message
             ? error.message
             : "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้"
         );
@@ -403,7 +407,13 @@ export default function ProfilePage() {
     };
 
     loadProfile();
-  }, [router]);
+  }, [router, loadAttempt]);
+
+  const retryLoadProfile = () => {
+    setLoadError("");
+    setLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
 
   useEffect(() => {
     const loadDonations = async () => {
@@ -680,6 +690,21 @@ export default function ProfilePage() {
           {loading ? (
             <div className="py-16 text-center text-sm text-slate-500">
               กำลังโหลดข้อมูลโปรไฟล์...
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center gap-4 rounded-3xl border border-red-200 bg-red-50 px-5 py-12 text-center">
+              <i className="fa-solid fa-circle-exclamation text-3xl text-[#dc2626]"></i>
+
+              <p className="text-sm font-semibold text-[#dc2626]">{loadError}</p>
+
+              <button
+                type="button"
+                onClick={retryLoadProfile}
+                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+              >
+                <i className="fa-solid fa-rotate-right"></i>
+                ลองใหม่อีกครั้ง
+              </button>
             </div>
           ) : (
             <form
